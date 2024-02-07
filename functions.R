@@ -30,7 +30,7 @@ write_cli <- function(rcp, rcm){
       n_dir <- paste0(tmp_result_path, "/", x, "_", "rcm", y, "_", p[1])
       dir.create(n_dir, recursive = TRUE)
       ##Coping files to update
-      file.copy(paste0(tmp_path,"/", files_to_update), n_dir, overwrite = TRUE)
+      file.copy(paste0(tmp_setup_path,"/", files_to_update), n_dir, overwrite = TRUE)
       ##Running function to prepare climate input for scenario
       prepare_climate(cli_lst, n_dir, p[2], p[3])
     })
