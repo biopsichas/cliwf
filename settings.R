@@ -23,7 +23,7 @@ rcm <- c("1", "2", "3", "4", "5", "6")
 ## Periods to be prepared and used in modelling
 periods <- list(c("H", "1988-01-01", "2020-12-31"),
                 c("N", "2033-01-01", "2065-12-31"),
-                c("E", "2067-01-01", "2099-12-31"))
+                c("E", "2066-01-01", "2098-12-31"))
 
 ## HRUs numbers to get
 nb_hru <- 1:10240
