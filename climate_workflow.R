@@ -46,9 +46,9 @@ unlink(paste0(tmp_setup_path, "/",
                                               "landuse.lum", "management.sch"))))
 
 ## Copying all your current setup files to tmp directory
-file.copy(setdiff(list.files(path = setup_dir, full.names = TRUE), 
-                  list.files(path = setup_dir, 
-                             pattern = ".*.txt|.*.zip|.*success.fin|.*co2.out|.*.exe|.*simulation.out|.*plant.ini|.*hru-data.hru|.*landuse.lum|.*management.sch|.*.bak|.*.mgts|.*.farm|.*area_calc.out|.*checker.out|.*sqlite|.*diagnostics.out|.*erosion.out|.*files_out.out|.*.swf|.*.pcp|.*.tmp|.*.hmd|.*.slr|.*.wnd|.*.cli", full.names = TRUE)), 
+file.copy(c(setdiff(list.files(path = setup_dir, full.names = TRUE), 
+                    list.files(path = setup_dir, 
+                               pattern = ".*.txt|.*.zip|.*success.fin|.*co2.out|.*simulation.out|.*plant.ini|.*hru-data.hru|.*landuse.lum|.*management.sch|.*.bak|.*.mgts|.*.farm|.*area_calc.out|.*checker.out|.*sqlite|.*diagnostics.out|.*erosion.out|.*files_out.out|.*.swf|.*.pcp|.*.tmp|.*.hmd|.*.slr|.*.wnd|.*.cli", full.names = TRUE)), paste(setup_dir, "soil_plant.ini", sep = "/")), 
           tmp_setup_path)
 
 ##------------------------------------------------------------------------------
@@ -116,8 +116,8 @@ cl <- makeCluster(cores,  outfile="")
 registerDoParallel(cl)
 
 ##Run parallelization
-main_results <- foreach(d = m_dir, .packages = c("SWATfarmR", "tidyverse",
-                                                 "stringr")) %dopar% {write_mgt(d, periods)}
+txt_info <- foreach(d = m_dir, .packages = c("SWATfarmR", "tidyverse",
+                                 "stringr")) %dopar% {write_mgt(d, periods)}
 ##Clean after
 stopCluster(cl)
 
