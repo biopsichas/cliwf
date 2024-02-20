@@ -164,6 +164,7 @@ txt_info <- foreach (d = m_dir) %dopar% {
   files.help <- c('hru.con', 'hru_agr.txt') # please provide hru_agr.txt file (cropland hru names) in txt folder
   file.copy(c(files.out.aa,files.out.mon,files.out.day,files.help), cal, overwrite = T)
   file.remove(c(files.out.aa,files.out.mon,files.out.day,files.help))
+  file.remove(list.files(path = paste(wd, d, sep='/'), pattern = ".*.txt|.*.out|.*.swf", full.names = TRUE))
 }
 stopCluster(cl)
 
