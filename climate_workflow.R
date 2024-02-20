@@ -144,11 +144,12 @@ file.copy(paste0(tmp_setup_path, "/print.prt"), paste0(m_dir, "/", "print.prt"),
 ## Prepare parallelization
 cl <- makeCluster(cores,  outfile="")
 registerDoParallel(cl)
+txt_info <- foreach (d = m_dir) %dopar% {
+  file.copy(paste0(tmp_path, "/", "setup/", setdiff(list.files(path = tmp_setup_path), 
+                                                  list.files(path = d))), d)}
 
 wd <- getwd()
 txt_info <- foreach (d = m_dir) %dopar% {
-  file.copy(paste0(tmp_path, "/", "setup/", setdiff(list.files(path = tmp_setup_path), 
-                                                    list.files(path = d))), d)
   # run SWAT for all cal files in parallel
   setwd(paste(wd, d, sep='/'))
   system(swat_exe)
@@ -162,6 +163,7 @@ txt_info <- foreach (d = m_dir) %dopar% {
   files.out.day <- dir(getwd(), pattern = 'day')
   files.help <- c('hru.con', 'hru_agr.txt') # please provide hru_agr.txt file (cropland hru names) in txt folder
   file.copy(c(files.out.aa,files.out.mon,files.out.day,files.help), cal, overwrite = T)
+  file.remove(c(files.out.aa,files.out.mon,files.out.day,files.help))
 }
 stopCluster(cl)
 
