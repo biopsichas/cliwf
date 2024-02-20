@@ -128,8 +128,9 @@ stopCluster(cl)
 ## Input for the print file
 print_prt <- read_lines(paste0(tmp_setup_path,'/print.prt'), lazy = FALSE)
 print_prt[3] <- "3           0         0         0         0         1         "
-print_prt[41] <- "channel                      d             n             y             y  "
-print_prt[42] <- "channel_sd                   d             n             y             y  "
+print_prt[33] <- "hru_wb                       n             y             y             y  "
+print_prt[41] <- "channel                      y             n             y             y  "
+print_prt[42] <- "channel_sd                   y             n             y             y  "
 write_lines(print_prt, paste0(tmp_setup_path,'/print.prt'))
 
 ## Updating in the result directories
@@ -189,7 +190,7 @@ path <- paste(tmp_path, "sim", sep = "/")
 ### (but then make sure you have a calibration.cal with fitted parameters in the txt folder)
 
 ### collect average annual output of water quantity and quality at outlet channel (aggregated comparison)
-cha_aa_all <- ind_cha_aa(path, 'cha0926', ensemble=T) #adjust channel
+cha_aa_all <- ind_cha_aa(path, 'cha043', ensemble=F) #adjust channel
 
 ###  collect indicators related to the daily dynamics Water, N, P, Sed
 cha_day_all <- ind_cha_dayII(path, 'cha0926', 'all', ensemble=T) #adjust channel
