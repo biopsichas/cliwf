@@ -1194,11 +1194,11 @@ ind_hru_aa_nb <- function(path, a = 'basin', ensemble = F){
 }
 
 # water balance related indicators based on monthly hru outputs
-ind_hru_mon_wb <- function(path, period = c(5:9), a = 'basin', ensemble = F){
+ind_hru_mon_wb <- function(path, period = c(5:9), a = 'basin', ensemble = F, nrows = length(measr.list)){
   
   if(ensemble==F){
     sw_colnames <- paste0('sw_', map_chr(period, ~paste(.x, collapse = "_")))
-    df_out <- data.frame(matrix(data=NA, nrow=length(measr.list), ncol=length(sw_colnames)+1))
+    df_out <- data.frame(matrix(data=NA, nrow=nrows, ncol=length(sw_colnames)+1))
     names(df_out) <- c('scen_name', sw_colnames)
     df_out$scen_name <- sapply(strsplit(path, split ="/"),tail,1)
                          
@@ -1423,16 +1423,6 @@ ind_bsn_aa_crp_ha_Y <- function(path, crop_sel, ensemble=F){
  
   return(df_out)
 }
-
-# Specify grain units for relevant crops (must be applicable to dry mass!!!)
-grain_units <- data.frame('wbar' = 1.163, 
-                          'csil' = 1.071, 
-                          'wwht' = 1.209, 
-                          'wira' = 1.429,
-                          'barl' = 1.163,
-                          'akgs' = 0.682, 
-                          'wiry' = 1.174, 
-                          'sgbt' = 1)
 
 # Load in observations
 get_obs <- function(obs_path, obs_type, sim_period) {

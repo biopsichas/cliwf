@@ -30,7 +30,7 @@ tmp_setup_path <- paste0(tmp_path, "/", "setup")
 ## Saving reference result files
 tmp_result_path <- paste0(tmp_path, "/", "results")
 
-## If the directory exists, delete the results directory. (Please be careful!!!)
+## !!!If the directory exists, delete the results directory. (Please be careful!!!)
 if (file.exists(tmp_path)) unlink(tmp_path, recursive = TRUE)
 dir.create(tmp_setup_path, recursive = TRUE)
 
@@ -125,17 +125,48 @@ stopCluster(cl)
 ## 7) Make sure the right outputs is printed
 ##------------------------------------------------------------------------------
 
+m_dir <- m_dir[!endsWith(m_dir, "SWIFT")]
+
+
 ## Input for the print file
 print_prt <- read_lines(paste0(tmp_setup_path,'/print.prt'), lazy = FALSE)
-print_prt[3] <- "3           0         0         0         0         1         "
-print_prt[33] <- "hru_wb                       n             y             y             y  "
-print_prt[41] <- "channel                      y             n             y             y  "
-print_prt[42] <- "channel_sd                   y             n             y             y  "
+print_prt <- gsub(" y ", " n ", print_prt)
+
+print_prt[33] <- "hru_wb                       n             y             n             y  "
+print_prt[34] <- "hru_nb                       n             n             n             y  "
+print_prt[35] <- "hru_ls                       n             n             n             y  "
+print_prt[36] <- "hru_pw                       n             n             n             y  "
+print_prt[42] <- "channel_sd                   n             n             n             y  "
+print_prt[44] <- "reservoir                    n             n             n             y  "
+
 write_lines(print_prt, paste0(tmp_setup_path,'/print.prt'))
 
 ## Updating in the result directories
-file.remove(paste0(m_dir, "/", "print.prt"))
-file.copy(paste0(tmp_setup_path, "/print.prt"), paste0(m_dir, "/", "print.prt"), overwrite = T)
+overwrite_file("print.prt")
+
+## Write object.prt
+obj_prt_path <- paste0(tmp_setup_path,'/object.prt')
+unlink(obj_prt_path )
+write.table(paste0("object.prt", ": written by the climate-workflow on ", Sys.time()), 
+            obj_prt_path, append = FALSE, sep = "\t", 
+            dec = ".", row.names = FALSE, col.names = FALSE, quote = FALSE)
+write.table(paste(sprintf(c(rep('%12s', 4), '%20s'), 
+                          c("ID", "OBJ_TYP", "OBJ_TYP_NO", "HYD_TYP", "FILENAME")), 
+                          collapse = ' '), obj_prt_path , append = TRUE, 
+            sep = "\t", dec = ".", row.names = FALSE, col.names = FALSE, quote = FALSE)
+write.table(paste(sprintf(c(rep('%12s', 4), '%20s'), 
+                          c("1", "sdc", as.character(outflow_reach), "tot", "cha_day.out")), 
+                  collapse = ' '), obj_prt_path , append = TRUE, 
+            sep = "\t", dec = ".", row.names = FALSE, col.names = FALSE, quote = FALSE)
+
+## Updating in the result directories
+overwrite_file("object.prt")
+
+file_cio <- readLines(paste0(tmp_setup_path, "/", "file.cio"))
+file_cio[2] <- "simulation        time.sim          print.prt         object.prt        object.cnt        null "
+writeLines(file_cio, paste0(tmp_setup_path, "/", "file.cio"))
+
+overwrite_file("file.cio")
 
 ##------------------------------------------------------------------------------
 ## 8) Run scenarios with save results (very long)
@@ -164,7 +195,7 @@ txt_info <- foreach (d = m_dir) %dopar% {
   files.help <- c('hru.con', 'hru_agr.txt') # please provide hru_agr.txt file (cropland hru names) in txt folder
   file.copy(c(files.out.aa,files.out.mon,files.out.day,files.help), cal, overwrite = T)
   file.remove(c(files.out.aa,files.out.mon,files.out.day,files.help))
-  file.remove(list.files(path = paste(wd, d, sep='/'), pattern = ".*.txt|.*.out|.*.swf", full.names = TRUE))
+  file.remove(list.files(path = paste(wd, d, sep='/'), pattern = ".*.txt|.*.out|.*.swf|.*.mgts|.*.farm", full.names = TRUE))
 }
 stopCluster(cl)
 
@@ -193,21 +224,23 @@ path <- paste(tmp_path, "sim", sep = "/")
 ### (but then make sure you have a calibration.cal with fitted parameters in the txt folder)
 
 ### collect average annual output of water quantity and quality at outlet channel (aggregated comparison)
-cha_aa_all <- ind_cha_aa(path, 'cha043', ensemble=F) #adjust channel
+r_dir <- list.dirs(path, recursive = TRUE)[-1]
+rch <- sprintf("cha%03d", outflow_reach)
+cha_aa_all <- ind_cha_aa(r_dir, rch) #adjust channel
 
 ###  collect indicators related to the daily dynamics Water, N, P, Sed
-cha_day_all <- ind_cha_dayII(path, 'cha0926', 'all', ensemble=T) #adjust channel
+cha_day_all <- ind_cha_dayII(r_dir, rch, 'all') #adjust channel
 
 ###  collect HRU-based indicators related to water quality (average annual losses)
-hru_aa_nb_all <- ind_hru_aa_nb(path, a='agr', ensemble=T) #adjust channel
+hru_aa_nb_all <- ind_hru_aa_nb(r_dir) #adjust channel
 
 ###  collect HRU-based indicators related to  water quantity (average annual values)
-hru_aa_wb_all <- ind_hru_aa_wb(path, a='agr', ensemble=T)
+hru_aa_wb_all <- ind_hru_aa_wb(r_dir)
 
 ###  collect HRU-based indicators related to  water quantity (average annual for specified months)
 ## please specify start and end months of interest for the soil water analysis
 sw_periods <- list(c(5:9), 5, 6, 7, 8, 9) #this is an example for printing sw for the period May to September and also for each single month in that period
-hru_mon_all <- ind_hru_mon_wb(path, period = sw_periods, a='agr', ensemble=T) #might take a while
+hru_mon_all <- ind_hru_mon_wb(r_dir, period = sw_periods) #might take a while
 
 ### collect cropping information for all scenarios - grain units and cultivated hectare average annual
 # define 1) path, 2) crop selection, 3) type of output: a) yield, b) ha, 4) specify grain units equivalent for 
@@ -215,12 +248,12 @@ hru_mon_all <- ind_hru_mon_wb(path, period = sw_periods, a='agr', ensemble=T) #m
 #   'wwht', 'akgs', 'wbar', 'wira', 'csil', 'wiry', 'sgbt','barl'
 # the measure list (measr.list) can be adapted to the measures you want to compare
 
-crop_sel <- c('wwht', 'akgs', 'wbar', 'wira', 'csil', 'wiry', 'sgbt','barl') #adjust
-crop_aa_gu <- ind_bsn_aa_crp(path, crop_sel, out_type = "yield", grain_units, ensemble=T)
-crop_aa_ha <- ind_bsn_aa_crp(path, crop_sel, out_type = "ha", grain_units, ensemble=T)
+#adjust
+crop_aa_gu <- ind_bsn_aa_crp(r_dir, crop_sel, out_type = "yield", grain_units)
+crop_aa_ha <- ind_bsn_aa_crp(r_dir, crop_sel, out_type = "ha", grain_units)
 
 ### collect cropping information for all scenarios - Crop specific average annual yield and ha
-crop_aa_all <- ind_bsn_aa_crp_ha_Y(path, crop_sel, ensemble=T)
+crop_aa_all <- ind_bsn_aa_crp_ha_Y(r_dir, crop_sel, ensemble=T)
 
 ##### ----------------
 # prepare data for plotting

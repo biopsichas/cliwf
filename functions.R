@@ -58,3 +58,9 @@ write_mgt <- function(pth, p = periods){
   frm$schedule_operations(start_year = start_d, end_year = end_d, replace = 'all')
   frm$write_operations(start_year = start_d, end_year = end_d)
 }
+
+overwrite_file <- function(file_name){
+  file.remove(paste0(m_dir, "/", file_name))
+  file.copy(paste0(tmp_setup_path, "/", file_name), paste0(m_dir, "/", file_name), overwrite = T)
+}
+
