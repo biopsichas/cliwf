@@ -276,7 +276,7 @@ df_plot_long  <- df_plot_long[!grepl("_H$", df_plot_long$scen_name),] %>%
               mutate(scen_base = gsub("_[[:alpha:]]*$","",scen_name)) %>% 
               rename(value_base = value) %>% 
               select(-scen_name), by = c("scen_base", "indi")) %>% 
-  mutate(value = round(100*(1 - value/value_base), 3)) %>% 
+  mutate(value = round(100*(value/value_base-1), 3)) %>% 
   select(-ends_with("base")) %>%
   mutate(scen_name = toupper(scen_name)) %>% 
   mutate_all(~ifelse(is.nan(.), NA, .)) %>% 
