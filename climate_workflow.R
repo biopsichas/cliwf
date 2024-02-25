@@ -132,6 +132,9 @@ m_dir <- m_dir[!endsWith(m_dir, "SWIFT")]
 print_prt <- read_lines(paste0(tmp_setup_path,'/print.prt'), lazy = FALSE)
 print_prt <- gsub(" y ", " n ", print_prt)
 
+print_prt[10] <- "basin_wb                     n             y             n             y  "
+print_prt[14] <- "basin_pw                     n             y             n             y  "
+print_prt[15] <- "basin_aqu                    n             y             n             y  "
 print_prt[33] <- "hru_wb                       n             y             n             y  "
 print_prt[34] <- "hru_nb                       n             n             n             y  "
 print_prt[35] <- "hru_ls                       n             n             n             y  "
@@ -240,7 +243,7 @@ hru_aa_wb_all <- ind_hru_aa_wb(r_dir)
 ###  collect HRU-based indicators related to  water quantity (average annual for specified months)
 ## please specify start and end months of interest for the soil water analysis
 sw_periods <- list(c(5:9), 5, 6, 7, 8, 9) #this is an example for printing sw for the period May to September and also for each single month in that period
-hru_mon_all <- ind_hru_mon_wb(r_dir, period = sw_periods) #might take a while
+hru_mon_all <- ind_hru_mon_wb(r_dir, period = sw_periods, nrows = 54) #might take a while
 
 ### collect cropping information for all scenarios - grain units and cultivated hectare average annual
 # define 1) path, 2) crop selection, 3) type of output: a) yield, b) ha, 4) specify grain units equivalent for 
@@ -253,218 +256,56 @@ crop_aa_gu <- ind_bsn_aa_crp(r_dir, crop_sel, out_type = "yield", grain_units)
 crop_aa_ha <- ind_bsn_aa_crp(r_dir, crop_sel, out_type = "ha", grain_units)
 
 ### collect cropping information for all scenarios - Crop specific average annual yield and ha
-crop_aa_all <- ind_bsn_aa_crp_ha_Y(r_dir, crop_sel, ensemble=T)
+crop_aa_all <- ind_bsn_aa_crp_ha_Y(r_dir, crop_sel)
 
 ##### ----------------
 # prepare data for plotting
 ##### ----------------
 
 ### combine data of interest in one dataframe for plotting
-df_plot <- data.frame(id=1:nrow(cha_aa_all), cha_aa_all[,c(1:5)])
-df_plot <- merge(df_plot, cha_day_all[,c(1:16)], by = "scen_name")
-df_plot <- merge(df_plot, hru_aa_nb_all[,c(1:6)], by = "scen_name")
-df_plot <- merge(df_plot, hru_aa_wb_all[,c(1:3)], by = "scen_name")
-df_plot <- merge(df_plot, hru_mon_all[,c(1:(grep('lower', names(hru_mon_all))[1]-1))], by = "scen_name")
-df_plot <- merge(df_plot, crop_aa_gu[,c(1:2)], by = "scen_name")
-df_plot <- merge(df_plot, crop_aa_ha[,c(1:2)], by = "scen_name")
-df_plot <- merge(df_plot, crop_aa_all[,c(1:(grep('lower', names(crop_aa_all))[1]-1))], by = "scen_name")
-df_plot <- df_plot[order(df_plot$id), ]
+df_plot <- cha_aa_all 
+for(l in list(cha_day_all, hru_aa_nb_all, hru_aa_wb_all, hru_mon_all, crop_aa_gu, 
+              crop_aa_ha, crop_aa_all)) df_plot <- left_join(df_plot, l, by = "scen_name")
 
-## calculate the scenario effects (absolute effects), by subtracting the status-quo outputs from the scenario outputs
-df_plot[-1, -1:-2] <- df_plot[-1,-1:-2]-df_plot[rep(1, nrow(df_plot)-1), -1:-2]
+df_plot_long <- pivot_longer(df_plot, cols = -scen_name, names_to = "indi", values_to = "value")
 
-## calculate the percentage change 
-df_plot[-1, -1:-2] <- round((df_plot[-1,-1:-2]/df_plot[rep(1, nrow(df_plot)-1), -1:-2])*100, 3)
+## Get long format for plotting
+df_plot_long  <- df_plot_long[!grepl("_H$", df_plot_long$scen_name),] %>% 
+  mutate(scen_base = gsub("_[[:alpha:]]*$","",scen_name)) %>% 
+  left_join(df_plot_long[grepl("_H$", df_plot_long$scen_name),] %>% 
+              mutate(scen_base = gsub("_[[:alpha:]]*$","",scen_name)) %>% 
+              rename(value_base = value) %>% 
+              select(-scen_name), by = c("scen_base", "indi")) %>% 
+  mutate(value = round(100*(1 - value/value_base), 3)) %>% 
+  select(-ends_with("base")) %>%
+  mutate(scen_name = toupper(scen_name)) %>% 
+  mutate_all(~ifelse(is.nan(.), NA, .)) %>% 
+  mutate(scen_name = gsub("_[^_]*_", "_", scen_name)) %>% 
+  separate(scen_name, into = c("RCP", "Period"), sep = "_") %>% 
+  mutate(Period = case_when(Period == "N" ~ "Near future",
+                         Period == "E" ~ "End century")) %>%
+  mutate(Period = factor(Period, levels = c("Near future", "End century")))
 
-## prepare a long format dataframe, needed for specific plots (leaving out status quo)
-df_plot_long <- melt(setDT(df_plot[-1, -2]), id.vars = c("scen_name"), variable.name = "indi")
 
-## define specific order for plotting
-## ! adapt this vector if you have other indicators (e.g. different sw_periods and crops) !
-##   or want to modify the order in the plot!
-colnames(df_plot)
 df_plot_order <- c("Q_mean", "Q_max", "Q_p95", "Q_p90", "Q_p50", "Q_p10", "Q_p05", "Q_min", 
                    "Q_maxmin", "Q_p95p05", "Q_p90p10", "Q_low_days", "Q_high_days",
                    "perc", "sw", "sw_5_6_7_8_9", "sw_5", "sw_6", "sw_7", "sw_8", "sw_9", 
                    "Nload", "Nconc_days", "N_loss", "N_loss_ratio",
                    "Pload", "Pconc_days", "P_loss", "P_loss_ratio",
                    "Sedload", "Sedconc_days", "Sed_loss", 
-                   "grain_units_aa", "crops_ha_aa", 
-                   "wwht_ha", "akgs_ha", "wbar_ha", "wira_ha", "csil_ha", "wiry_ha", "sgbt_ha", 
-                   "barl_ha", 
-                   "wwht_yld_t_ha", "akgs_yld_t_ha", "wbar_yld_t_ha", "wira_yld_t_ha", 
-                   "csil_yld_t_ha", "wiry_yld_t_ha", "sgbt_yld_t_ha", "barl_yld_t_ha")
+                   "canp_yld_t_ha", "barl_yld_t_ha", "corn_yld_t_ha",  "sgbt_yld_t_ha",
+                   "onio_yld_t_ha", "mint_yld_t_ha", "lett_yld_t_ha", "crrt_yld_t_ha",
+                   "fesc_yld_t_ha", "alfa_yld_t_ha")
+
 # adapt the factors accordingly
-df_plot_long$indi <- factor(df_plot_long$indi, levels = rev(df_plot_order))
+df_plot_long <- df_plot_long[df_plot_long$indi %in% df_plot_order,]
+df_plot_long$indi <- factor(df_plot_long$indi, levels = df_plot_order)
 
-
-##### ----------------
-# Plotting barplots, spider web charts, profile plots
-##### ----------------
-
-### First rough plot:
-## Plot profile-chart with percentage change
-ggplot(data=df_plot_long, 
-       aes(x=indi, y=value, group=scen_name, color=scen_name)) +
-  geom_line() + 
-  geom_point(show.legend = FALSE) +
-  coord_flip() + 
-  xlab("Group") +
-  ylab("Value")
-
-### Plot coloured vertical barplot
-#Breaks for background rectangles
-# ! @all: please modify the following if you changed the number of indicators in the plot 
-# (check 'df_plot_order')
-rects <- data.frame(xstart = c(0.5, 18.5, 21.5, 25.5, 29.5), 
-                    xend = c(18.5, 21.5, 25.5, 29.5, 50.5), 
-                    col = c("yellow", "tan4", "gray90", "seagreen1", "cadetblue1"))
-
-## version 1 - separate bar for each scenario
-ggplot() +
-  geom_bar(data = df_plot_long, 
-           aes(x = indi, y = value, fill = scen_name), 
-           stat = "identity", 
-           position = "dodge") + 
-  labs(x="indicators", y="relative effects compared to status quo [%]") + 
-  theme_bw() + 
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  scale_fill_brewer(palette = "Dark2") + 
-  scale_color_brewer(palette = "Dark2") + 
-  coord_flip() + 
-  geom_rect(data = rects, 
-            aes(xmin = xstart, xmax = xend, ymin = -Inf, ymax = Inf),
-            fill = rects$col,
-            alpha = 0.2) +
-  geom_bar(data = df_plot_long, 
-           aes(x = indi, y = value, fill = scen_name), 
-           stat = "identity", 
-           position = "dodge")
-
-
-## version 2 - stacked bar + separate point for "all" scenario
-ggplot() +
-  geom_bar(data = subset(df_plot_long, df_plot_long$scen_name!="all"), 
-           aes(x = indi, y = value, fill = scen_name), 
-           stat = "identity", 
-           position = "stack") + 
-  labs(x="indicators", y="relative effects compared to status quo [%]") + 
-  scale_fill_brewer(palette = "Dark2") + 
-  scale_color_brewer(palette = "Dark2") + 
-  coord_flip() + 
-  geom_rect(data = rects, 
-            aes(xmin = xstart, xmax = xend, ymin = -Inf, ymax = Inf),
-            fill = rects$col,
-            alpha = 0.2) +
-  geom_bar(data = subset(df_plot_long, df_plot_long$scen_name!="all"), 
-           aes(x = indi, y = value, fill = scen_name), 
-           stat = "identity", 
-           position = "stack") +
-  geom_point(data = subset(df_plot_long, df_plot_long$scen_name=="all"), 
-             aes(x = indi, y = value, group = 1, color = 'all_scen'),
-             size = 3,
-             shape= 1,
-             stroke = 2) +
-  geom_hline(yintercept = 0, col = "black") + 
-  scale_color_manual(labels = c('all_scen'), 
-                     values = c('black')) +
-  theme_bw() + 
-  theme(panel.grid.major = element_blank(), 
-        panel.grid.minor = element_blank(), 
-        legend.title = element_blank())
-
-
-### plot radar chart (spider web)
-
-# function for adding MAx min values to the first rows
-set_max_min <- function(df){
-  df_max <- max(df, na.rm = TRUE)
-  df_min <- min(df, na.rm = TRUE)
-  df <- rbind(max = df_max, min = df_min, df)
-  return(df)
-}
-
-#Prepare data (e.g. add max + min values; add row-names)
-df_plot_spider <- df_plot[, -2]
-row.names(df_plot_spider) <- df_plot_spider[,1]
-df_plot_spider <- df_plot_spider[, -1]
-# set status-quo to 0
-df_plot_spider["status_quo",] <- 0
-df_plot_spider <- set_max_min(df_plot_spider)
-# reorder columns as defined above
-df_plot_spider <- df_plot_spider[df_plot_order]
-
-
-## finetuning radar chart
-# select indicators you like to plot
-plot_sel <- df_plot_spider[,c(1:34)]
-# select colors for the scenarios
-col_sel <- c("blue", "green", "brown", "skyblue", "forestgreen", "yellow", "black")
-# re-calculate max_min
-plot_sel <- plot_sel[c(-1,-2),]
-plot_sel <- set_max_min(plot_sel)
-# plot
-op <- par(mar = c(1, 2, 2, 1))
-radarchart(df = plot_sel,
-           maxmin = T,
-           axistype = 1,
-           seg = 10,
-           caxislabels = c(round(plot_sel[2,1],1),
-                           rep(NA,9),      # needs to be the number of segments-1 )
-                           round(plot_sel[1,1],1)),
-           vlcex = 0.6, vlabels = colnames(plot_sel),
-           title = "measure effects [%]" ,
-           pcol = col_sel, #pfcol = scales::alpha(col_sel, 0.2),
-           plwd = 2, plty = 1,
-           cglcol = "grey", cglty = 1, cglwd = 0.8, axislabcol = "red",
-)
-# Add an horizontal legend
-legend(
-  x = "right", legend = rownames(df_plot_spider[-c(1,2),]), horiz = F,
-  bty = "n", pch = 20 , col = col_sel,
-  text.col = "black", cex = 1, pt.cex = 1.5
-)
-#par(op_bk)
-
-
-## Create a separarte Radar Chart for each "Indicator category" (Water, N + P + Sed, Yield))
-# select colors for the scenarios
-col_sel <- c("blue", "green", "brown", "skyblue", "forestgreen", "yellow", "black")
-# define titles and columns of the indicators you want to consider)
-title_sel <- c("Water", "N_P_Sed", "Crops")
-title_pos <- list(c(1:21), c(22:32), c(33:50))
-# Reduce plot margin and split the screen in 3 parts
-op <- par(mar = c(1, 1, 1, 1))
-par(mfrow = c(1,3))
-# Create the radar chart
-for(i in 1:3){
-  plot_sel <- df_plot_spider[,title_pos[[i]]]
-  # re-calculate max_min
-  plot_sel <- plot_sel[c(-1,-2),]
-  plot_sel <- set_max_min(plot_sel)
-  # plot
-  radarchart(df = plot_sel,
-             maxmin = T,
-             axistype = 1,
-             seg = 10,
-             caxislabels = c(round(plot_sel[2,1],1),
-                             rep(NA,9),      # needs to be the number of segments-1 )
-                             round(plot_sel[1,1],1)),
-             vlcex = 0.8, vlabels = colnames(plot_sel),
-             title = paste0("measure effects [%] - ", title_sel[i]),
-             pcol = col_sel, #pfcol = scales::alpha(col_sel, 0.2),
-             plwd = 2, plty = 1,
-             cglcol = "grey", cglty = 1, cglwd = 0.8, axislabcol = "red",
-  )
-}
-#par(op_bk)
-
-##TODO
-
-# - find better solution for the axis lables
-# - maybe fill/color the webs
-
-
-
-
+# Plot 
+ggplot(df_plot_long, aes(x = Period, y = value, fill = RCP))+
+  geom_boxplot() +
+  # geom_smooth(method=lm, formula = y ~ x)+
+  labs(x = "Period", y = "Change comparing to historical period in %") +
+  theme_bw()+
+  facet_wrap(~indi,  scales = "free_y")
 

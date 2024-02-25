@@ -31,8 +31,10 @@ swat_exe <- 'Rev_61_0_64rel.exe'
 ## Outflow reach
 outflow_reach <- 43
 
+## Crop selection
 crop_sel <- c("wwht","trit","canp","barl","csil","corn","sgbt","onio","mint","lett","crrt","fesc","alfa") 
 
+## Grain units
 grain_units <- data.frame('alfa' = 1.163, 'csil' = 1.071, 'wwht' = 1.209, 
                           'barl' = 1.163, 'sgbt' = 1, 'canp' = 1, 'corn' = 1.071,
                           'crrt' = 1, 'fesc' = 1, 'lett' = 1, 'mint' = 1, 'onio' = 1,
