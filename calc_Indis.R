@@ -544,9 +544,9 @@ return(df_out)
 ind_cha_dayII <- function(path, 
                           channel, 
                           ind, 
-                          threshold_lowQ=0.063,
-                          threshold_highQ=2.01,
-                          threshold_N=2.3, 
+                          threshold_lowQ=0.01,
+                          threshold_highQ=2.5,
+                          threshold_N=10, 
                           threshold_P=0.082, 
                           threshold_Sed=10,
                           hd=T,
@@ -885,7 +885,24 @@ ind_hru_aa_wb <- function(path, a = 'basin', ensemble = F){
   if(ensemble==F){
     df_out <- data.frame(scen_name=sapply(strsplit(path, split ="/"),tail,1), 
                          sw=NA, 
-                         perc=NA)
+                         perc=NA,
+                         precip=NA,
+                         snofall=NA,
+                         snomlt=NA,
+                         surq_gen=NA,
+                         latq=NA,
+                         wateryld=NA,
+                         et=NA,
+                         ecanopy=NA,
+                         eplant=NA,
+                         esoil=NA,
+                         surq_cont=NA,
+                         cn=NA,
+                         sw_300=NA,
+                         pet=NA,
+                         qtile=NA,
+                         surq_cha=NA,
+                         latq_cha=NA)
     
     for (i in 1:length(path)) {
       # Read file
@@ -896,7 +913,10 @@ ind_hru_aa_wb <- function(path, a = 'basin', ensemble = F){
       # Keep all hru_ls columns
       
       columns_to_keep <- c("jday", "mon", "day", "yr", "unit", "gis_id", "name", 
-                           "sw_ave", "perc")
+                           "sw_ave", "perc", "precip", "snofall", "snomlt", "surq_gen",
+                           "latq", "wateryld", "et", "ecanopy", "eplant", "esoil",
+                           "surq_cont", "cn", "sw_300",
+                           "pet", "qtile", "surq_cha", "latq_cha")                           
       
       # Create a new data frame with only the selected columns
       if(a == 'basin'){
@@ -915,18 +935,71 @@ ind_hru_aa_wb <- function(path, a = 'basin', ensemble = F){
       # Calculate the weighted values
       df_selected_hru_wb  <- df_selected_hru_wb  %>%
         mutate(weighted_sw = sw_ave * hru_wb$area,
-               weighted_perc = perc * hru_wb$area)
+               weighted_perc = perc * hru_wb$area,
+               weighted_precip = precip * hru_wb$area,
+               weighted_snofall = snofall * hru_wb$area,
+               weighted_snomlt = snomlt * hru_wb$area,
+               weighted_surqgen = surq_gen * hru_wb$area,
+               weighted_latq = latq * hru_wb$area,
+               weighted_wateryld = wateryld * hru_wb$area,
+               weighted_perc = perc * hru_wb$area,
+               weighted_et = et * hru_wb$area,
+               weighted_ecanopy = ecanopy * hru_wb$area,
+               weighted_eplant = eplant * hru_wb$area,
+               weighted_esoil = esoil * hru_wb$area,
+               weighted_surqcont = surq_cont * hru_wb$area,
+               weighted_cn = cn * hru_wb$area,
+               weighted_sw300 = sw_300 * hru_wb$area,
+               weighted_pet = pet * hru_wb$area,
+               weighted_qtile = qtile * hru_wb$area,
+               weighted_surqcha = surq_cha * hru_wb$area,
+               weighted_latqcha = latq_cha * hru_wb$area,)
       
       # Calculate the total weighted sum
       total_weighted_sw <- sum(df_selected_hru_wb$weighted_sw, na.rm = TRUE)
       total_weighted_perc <- sum(df_selected_hru_wb$weighted_perc, na.rm = TRUE)
+      total_weighted_precip <- sum(df_selected_hru_wb$weighted_precip, na.rm = TRUE)
+      total_weighted_snofall <- sum(df_selected_hru_wb$weighted_snofall, na.rm = TRUE)
+      total_weighted_snomlt <- sum(df_selected_hru_wb$weighted_snomlt, na.rm = TRUE)
+      total_weighted_surqgen <- sum(df_selected_hru_wb$weighted_surqgen, na.rm = TRUE)
+      total_weighted_latq <- sum(df_selected_hru_wb$weighted_latq, na.rm = TRUE)
+      total_weighted_wateryld <- sum(df_selected_hru_wb$weighted_wateryld, na.rm = TRUE)
+      total_weighted_et <- sum(df_selected_hru_wb$weighted_et, na.rm = TRUE)
+      total_weighted_ecanopy <- sum(df_selected_hru_wb$weighted_ecanopy, na.rm = TRUE)
+      total_weighted_eplant <- sum(df_selected_hru_wb$weighted_eplant, na.rm = TRUE)
+      total_weighted_esoil <- sum(df_selected_hru_wb$weighted_esoil, na.rm = TRUE)
+      total_weighted_surqcont <- sum(df_selected_hru_wb$weighted_surqcont, na.rm = TRUE)
+      total_weighted_cn <- sum(df_selected_hru_wb$weighted_cn, na.rm = TRUE)
+      total_weighted_sw300 <- sum(df_selected_hru_wb$weighted_sw300, na.rm = TRUE)
+      total_weighted_pet <- sum(df_selected_hru_wb$weighted_pet, na.rm = TRUE)
+      total_weighted_qtile <- sum(df_selected_hru_wb$weighted_qtile, na.rm = TRUE)
+      total_weighted_surqcha <- sum(df_selected_hru_wb$weighted_surqcha, na.rm = TRUE)
+      total_weighted_latqcha <- sum(df_selected_hru_wb$weighted_latqcha, na.rm = TRUE)
       
       # Calculate the total area across all HRUs
       total_area <- sum(hru_wb$area, na.rm = TRUE)
       
+
       # Calculate the area-weighted averages
       df_out[i,2] <- round(total_weighted_sw / total_area,3)
       df_out[i,3] <- round(total_weighted_perc / total_area,3)
+      df_out[i,4] <- round(total_weighted_precip / total_area,3)
+      df_out[i,5] <- round(total_weighted_snofall / total_area,3)
+      df_out[i,6] <- round(total_weighted_snomlt / total_area,3)
+      df_out[i,7] <- round(total_weighted_surqgen / total_area,3)
+      df_out[i,8] <- round(total_weighted_latq / total_area,3)
+      df_out[i,9] <- round(total_weighted_wateryld / total_area,3)
+      df_out[i,10] <- round(total_weighted_et / total_area,3)
+      df_out[i,11] <- round(total_weighted_ecanopy / total_area,3)
+      df_out[i,12] <- round(total_weighted_eplant / total_area,3)
+      df_out[i,13] <- round(total_weighted_esoil / total_area,3)
+      df_out[i,14] <- round(total_weighted_surqcont / total_area,3)
+      df_out[i,15] <- round(total_weighted_cn / total_area,3)
+      df_out[i,16] <- round(total_weighted_sw300 / total_area,3)
+      df_out[i,17] <- round(total_weighted_pet / total_area,3)
+      df_out[i,18] <- round(total_weighted_qtile / total_area,3)
+      df_out[i,19] <- round(total_weighted_surqcha / total_area,3)
+      df_out[i,20] <- round(total_weighted_latqcha / total_area,3)
     }
   }   
   
