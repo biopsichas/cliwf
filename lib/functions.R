@@ -50,7 +50,9 @@ write_mgt <- function(pth, p = periods){
     stop("Folder's name last letter should correspond to period name letter.
          Please rename them to fit this!!!")
   }
-  frm <- SWATfarmR::farmr_project$new(project_name = 'frm', project_path = pth)
+  # frm <- SWATfarmR::farmr_project$new(project_name = 'frm', project_path = pth)
+  frm <- SWATfarmR::farmr_project$new(project_name = 'frm', project_path = pth, 
+                                      project_type = 'environment') ## If you your version farmR >= 4.0.0
   api <- variable_decay(frm$.data$variables$pcp, -5,0.8)
   asgn <- select(frm$.data$meta$hru_var_connect, hru, pcp)
   frm$add_variable(api, "api", asgn)
@@ -59,8 +61,23 @@ write_mgt <- function(pth, p = periods){
   frm$write_operations(start_year = start_d, end_year = end_d)
 }
 
+##Function to overwrite files in setup
 overwrite_file <- function(file_name){
   file.remove(paste0(m_dir, "/", file_name))
   file.copy(paste0(tmp_setup_path, "/", file_name), paste0(m_dir, "/", file_name), overwrite = T)
+}
+
+##Function to plot results
+throw_box <- function(df, vars){
+  df <- df[df$indi %in% vars,]
+  df$indi <- factor(df$indi, levels = vars)
+  
+  # Plot
+  fig <- ggplot(df, aes(x = Period, y = value, fill = RCP))+
+    geom_boxplot() +
+    labs(x = "Period", y = "Change comparing to historical period in %") +
+    theme_bw()+
+    facet_wrap(~indi,  scales = "free_y")
+  return(fig)
 }
 
