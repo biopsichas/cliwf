@@ -1693,3 +1693,7 @@ plot_selected_sim <- function(sim, obs = NULL, run_ids = NULL, run_sel = NULL, p
   return(dy_plt)
 }
 
+## Load required packages
+foo1(c('dplyr' , 'readr' , 'tidyverse', 'data.table', 'remotes', 'devtools', 
+       'xts', 'dygraphs', 'R.utils', 'foreach', 'doParallel', 'data.table', 
+       'ggplot2', 'fmsb'))

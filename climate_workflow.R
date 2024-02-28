@@ -18,9 +18,11 @@ library(ggpubr)
 library(purrr)
 library(doParallel)
 library(foreach)
+library(DBI)
+library(RSQLite)
 
 source('settings.R')
-source('functions.R')
+source('lib/functions.R')
 
 ##------------------------------------------------------------------------------
 ## 2) Prepare fresh management files
@@ -33,6 +35,14 @@ tmp_result_path <- paste0(tmp_path, "/", "results")
 ## !!!If the directory exists, delete the results directory. (Please be careful!!!)
 if (file.exists(tmp_path)) unlink(tmp_path, recursive = TRUE)
 dir.create(tmp_setup_path, recursive = TRUE)
+
+## This is needed for write.exe to work (if it is right after SWATbuildR).
+## Just writing a dot in project_config table.
+db <- dbConnect(RSQLite::SQLite(), db_path)
+project_config <- dbReadTable(db, 'project_config')
+project_config$input_files_dir <- "."
+dbWriteTable(db, 'project_config', project_config, overwrite = TRUE)
+dbDisconnect(db)
 
 ## Coping.sqline database to tmp directory
 file.copy(db_path, tmp_setup_path)
@@ -125,8 +135,8 @@ stopCluster(cl)
 ## 7) Make sure the right outputs is printed
 ##------------------------------------------------------------------------------
 
+## Remove the SWIFT directories, which might be created by SWAT runs
 m_dir <- m_dir[!endsWith(m_dir, "SWIFT")]
-
 
 ## Input for the print file
 print_prt <- read_lines(paste0(tmp_setup_path,'/print.prt'), lazy = FALSE)
@@ -172,33 +182,37 @@ writeLines(file_cio, paste0(tmp_setup_path, "/", "file.cio"))
 overwrite_file("file.cio")
 
 ##------------------------------------------------------------------------------
-## 8) Run scenarios with save results (very long)
+## 8) Run all climate scenarios in parallel and collect results
 ##------------------------------------------------------------------------------
 
 ## Prepare parallelization
 cl <- makeCluster(cores,  outfile="")
 registerDoParallel(cl)
+
+## Write files, if missing
 txt_info <- foreach (d = m_dir) %dopar% {
   file.copy(paste0(tmp_path, "/", "setup/", setdiff(list.files(path = tmp_setup_path), 
                                                   list.files(path = d))), d)}
-
+## Run parallelization
 wd <- getwd()
 txt_info <- foreach (d = m_dir) %dopar% {
   # run SWAT for all cal files in parallel
   setwd(paste(wd, d, sep='/'))
   system(swat_exe)
   
-  #file handling
+  #Collect output files
   cal <- paste(wd, tmp_path, "sim", tail(unlist(strsplit(d,'/')), n = 1), sep = "/")
   dir.create(cal, recursive = TRUE)
   
   files.out.aa <- dir(getwd(), pattern = 'aa')
   files.out.mon <- dir(getwd(), pattern = 'mon')
   files.out.day <- dir(getwd(), pattern = 'day')
-  files.help <- c('hru.con', 'hru_agr.txt') # please provide hru_agr.txt file (cropland hru names) in txt folder
+  files.help <- c('hru.con', 'hru_agr.txt') # please provide hru_agr.txt file 
+  ## (cropland hru names) in txt folder
   file.copy(c(files.out.aa,files.out.mon,files.out.day,files.help), cal, overwrite = T)
   file.remove(c(files.out.aa,files.out.mon,files.out.day,files.help))
-  file.remove(list.files(path = paste(wd, d, sep='/'), pattern = ".*.txt|.*.out|.*.swf|.*.mgts|.*.farm", full.names = TRUE))
+  file.remove(list.files(path = paste(wd, d, sep='/'), 
+                         pattern = ".*.txt|.*.out|.*.swf|.*.mgts|.*.farm", full.names = TRUE))
 }
 stopCluster(cl)
 
@@ -206,27 +220,29 @@ stopCluster(cl)
 ## 9) Load Micha's functions for the output extraction and prepare results
 ##------------------------------------------------------------------------------
 
-source('calc_Indis.R')
+source('lib/calc_Indis.R')
 
-foo1(c('dplyr' , 'readr' , 'tidyverse', 'data.table', 'remotes', 'devtools', 
-       'xts', 'dygraphs', 'R.utils', 'foreach', 'doParallel', 'data.table', 
-       'ggplot2', 'fmsb'))
-
+## Direstory with the simulation results
 path <- paste(tmp_path, "sim", sep = "/")
 
 ##------------------------------------------------------------------------------
-## 10)  Output analysis from Micha (just copied, not tested!!!!)
+## 10)  Output analysis from Micha (warranty provided by Micha ;)
 ##------------------------------------------------------------------------------
 
 ### In the following functions to calculate indicators are applied
-### Please adjust function parameters (e.g. channel name, see also header information of calc_Indis.R)
-### In case an ensemble of calibration files is provided (in folder cal_files), set ensemble=T
-### The resulting dataframe will provide you the ensemble mean as well as the ensemble minimum (lower) 
+### Please adjust function parameters (e.g. channel name, see also header 
+## information of calc_Indis.R)
+### In case an ensemble of calibration files is provided (in folder cal_files), 
+## set ensemble=T
+### The resulting dataframe will provide you the ensemble mean as well as the 
+## ensemble minimum (lower) 
 ### and maximum (upper) of the respective indicator
 ### If no cal file ensemble can be provided, set ensemble=F 
-### (but then make sure you have a calibration.cal with fitted parameters in the txt folder)
+### (but then make sure you have a calibration.cal with fitted parameters in 
+## the txt folder)
 
-### collect average annual output of water quantity and quality at outlet channel (aggregated comparison)
+### collect average annual output of water quantity and quality at outlet channel 
+## (aggregated comparison)
 r_dir <- list.dirs(path, recursive = TRUE)[-1]
 rch <- sprintf("cha%03d", outflow_reach)
 cha_aa_all <- ind_cha_aa(r_dir, rch) #adjust channel
@@ -240,14 +256,19 @@ hru_aa_nb_all <- ind_hru_aa_nb(r_dir) #adjust channel
 ###  collect HRU-based indicators related to  water quantity (average annual values)
 hru_aa_wb_all <- ind_hru_aa_wb(r_dir)
 
-###  collect HRU-based indicators related to  water quantity (average annual for specified months)
+###  collect HRU-based indicators related to  water quantity (average annual for 
+## specified months)
 ## please specify start and end months of interest for the soil water analysis
-sw_periods <- list(c(5:9), 5, 6, 7, 8, 9) #this is an example for printing sw for the period May to September and also for each single month in that period
+sw_periods <- list(c(5:9), 5, 6, 7, 8, 9) #this is an example for printing sw for 
+## the period May to September and also for each single month in that period
 hru_mon_all <- ind_hru_mon_wb(r_dir, period = sw_periods, nrows = 54) #might take a while
 
-### collect cropping information for all scenarios - grain units and cultivated hectare average annual
-# define 1) path, 2) crop selection, 3) type of output: a) yield, b) ha, 4) specify grain units equivalent for 
-#  all of the selected crops (if you just keep the parameter 'grain_units', there is already a parameterisation for 
+### collect cropping information for all scenarios - grain units and cultivated 
+## hectare average annual
+## define 1) path, 2) crop selection, 3) type of output: a) yield, b) ha, 4) 
+## specify grain units equivalent for 
+#  all of the selected crops (if you just keep the parameter 'grain_units', 
+## there is already a parameterisation for 
 #   'wwht', 'akgs', 'wbar', 'wira', 'csil', 'wiry', 'sgbt','barl'
 # the measure list (measr.list) can be adapted to the measures you want to compare
 
@@ -255,12 +276,13 @@ hru_mon_all <- ind_hru_mon_wb(r_dir, period = sw_periods, nrows = 54) #might tak
 crop_aa_gu <- ind_bsn_aa_crp(r_dir, crop_sel, out_type = "yield", grain_units)
 crop_aa_ha <- ind_bsn_aa_crp(r_dir, crop_sel, out_type = "ha", grain_units)
 
-### collect cropping information for all scenarios - Crop specific average annual yield and ha
+### collect cropping information for all scenarios - Crop specific average annual 
+## yield and ha
 crop_aa_all <- ind_bsn_aa_crp_ha_Y(r_dir, crop_sel)
 
-##### ----------------
-# prepare data for plotting
-##### ----------------
+##------------------------------------------------------------------------------
+## 11)  Aggregate outputs into one dataframe for plotting
+##------------------------------------------------------------------------------
 
 ### combine data of interest in one dataframe for plotting
 df_plot <- cha_aa_all 
@@ -286,26 +308,19 @@ df_plot_long  <- df_plot_long[!grepl("_H$", df_plot_long$scen_name),] %>%
                          Period == "E" ~ "End century")) %>%
   mutate(Period = factor(Period, levels = c("Near future", "End century")))
 
+##------------------------------------------------------------------------------
+## 12)  Plotting your results
+##------------------------------------------------------------------------------
 
-df_plot_order <- c("Q_mean", "Q_max", "Q_p95", "Q_p90", "Q_p50", "Q_p10", "Q_p05", "Q_min", 
-                   "Q_maxmin", "Q_p95p05", "Q_p90p10", "Q_low_days", "Q_high_days",
-                   "perc", "sw", "sw_5_6_7_8_9", "sw_5", "sw_6", "sw_7", "sw_8", "sw_9", 
-                   "Nload", "Nconc_days", "N_loss", "N_loss_ratio",
-                   "Pload", "Pconc_days", "P_loss", "P_loss_ratio",
-                   "Sedload", "Sedconc_days", "Sed_loss", 
-                   "canp_yld_t_ha", "barl_yld_t_ha", "corn_yld_t_ha",  "sgbt_yld_t_ha",
-                   "onio_yld_t_ha", "mint_yld_t_ha", "lett_yld_t_ha", "crrt_yld_t_ha",
-                   "fesc_yld_t_ha", "alfa_yld_t_ha")
+## Print all available indicators
+unique(df_plot_long$indi)
 
-# adapt the factors accordingly
-df_plot_long <- df_plot_long[df_plot_long$indi %in% df_plot_order,]
-df_plot_long$indi <- factor(df_plot_long$indi, levels = df_plot_order)
+## Plotting selected indicators
+throw_box(df_plot_long, c("precip", "snofall", "snomlt", "surq_gen", 
+                          "latq", "wateryld", "et", "ecanopy", "eplant", "esoil",
+                          "surq_cont", "cn"))
 
-# Plot 
-ggplot(df_plot_long, aes(x = Period, y = value, fill = RCP))+
-  geom_boxplot() +
-  # geom_smooth(method=lm, formula = y ~ x)+
-  labs(x = "Period", y = "Change comparing to historical period in %") +
-  theme_bw()+
-  facet_wrap(~indi,  scales = "free_y")
-
+throw_box(df_plot_long, c("Q_mean", "Nload", "Pload", "Sedload", "Q_max", 
+                          "Q_p95", "Q_p90", "Q_p50", "Q_p10", "Q_p05", "Q_min", 
+                          "Q_maxmin", "Q_p95p05", "Q_p90p10", "Q_low_days", 
+                          "Q_high_days"))
