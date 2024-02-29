@@ -315,12 +315,20 @@ df_plot_long  <- df_plot_long[!grepl("_H$", df_plot_long$scen_name),] %>%
 ## Print all available indicators
 unique(df_plot_long$indi)
 
-## Plotting selected indicators
-throw_box(df_plot_long, c("precip", "snofall", "snomlt", "surq_gen", 
-                          "latq", "wateryld", "et", "ecanopy", "eplant", "esoil",
-                          "surq_cont", "cn"))
+## Plotting selected indicators: divided into 4 thematic plots. See calc_indic.R for indicator explanations
+# First plot - water balance indicators (some of them can be removed if not relevant, others may be added)
+throw_box(df_plot_long, c("precip", "snofall", "snomlt", "pet", "et", "perc", 
+                          "sw", "sw_5", "sw_6", "sw_7", "sw_8", "sw_9", "sw_300", 
+                          "surq_cha", "latq_cha", "qtile"))
 
-throw_box(df_plot_long, c("Q_mean", "Nload", "Pload", "Sedload", "Q_max", 
-                          "Q_p95", "Q_p90", "Q_p50", "Q_p10", "Q_p05", "Q_min", 
-                          "Q_maxmin", "Q_p95p05", "Q_p90p10", "Q_low_days", 
-                          "Q_high_days"))
+#Second plot - flow indicators (some can be removed if not relevant, others can be added)
+throw_box(df_plot_long, c("Q_mean", "Q_p95", "Q_p90", "Q_p50", "Q_p10", 
+                          "Q_p90p10", "Q_low_days", "Q_high_days"))
+
+#Third plot - water quality indicators (some can be removed if not relevant, others can be added)
+throw_box(df_plot_long, c("Nload", "Nconc_days", "N_loss","Pload", "Pconc_days", "P_loss"))
+
+#Fourth plot - crop yields - major crops from each CS should be selected
+throw_box(df_plot_long, c("canp_yld_t_ha", "barl_yld_t_ha", "corn_yld_t_ha", 
+                          "sgbt_yld_t_ha", "onio_yld_t_ha", "fesc_yld_t_ha", 
+                          "alfa_yld_t_ha", "trit_yld_t_ha", "wwht_yld_t_ha"))
