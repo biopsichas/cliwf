@@ -75,7 +75,7 @@ throw_box <- function(df, vars){
   # Plot
   fig <- ggplot(df, aes(x = Period, y = value, fill = RCP))+
     geom_boxplot() +
-    labs(x = "Period", y = "Change comparing to historical period in %") +
+    labs(x = "Period", y = "Change compared to baseline period [%]") +
     theme_bw()+
     facet_wrap(~indi,  scales = "free_y")
   return(fig)
