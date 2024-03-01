@@ -68,12 +68,12 @@ overwrite_file <- function(file_name){
 }
 
 ##Function to plot results
-throw_box <- function(df, vars, whisker_limits = FALSE, font_size = NULL){
+throw_box <- function(df, vars, drop_outliers = FALSE, font_size = NULL){
   df <- df[df$indi %in% vars,] %>% 
     mutate(indi = toupper(indi))
   df$indi <- factor(df$indi, levels = toupper(vars))
   
-  if(whisker_limits){
+  if(drop_outliers){
     nb_rec <- length(df$indi)
     # Filter out outliers
     df <- df %>%
