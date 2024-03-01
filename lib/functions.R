@@ -68,16 +68,44 @@ overwrite_file <- function(file_name){
 }
 
 ##Function to plot results
-throw_box <- function(df, vars){
-  df <- df[df$indi %in% vars,]
-  df$indi <- factor(df$indi, levels = vars)
+throw_box <- function(df, vars, whisker_limits = FALSE, font_size = NULL){
+  df <- df[df$indi %in% vars,] %>% 
+    mutate(indi = toupper(indi))
+  df$indi <- factor(df$indi, levels = toupper(vars))
+  
+  if(whisker_limits){
+    nb_rec <- length(df$indi)
+    # Filter out outliers
+    df <- df %>%
+      left_join(group_by(., indi) %>%
+                  summarize(l_lim = lim(value)[1], u_lim = lim(value)[2]), by = "indi") %>%
+      filter(value >= l_lim & value <= u_lim)
+    
+    message("Number of outliers removed: ", nb_rec - length(df$indi))
+  }
   
   # Plot
   fig <- ggplot(df, aes(x = Period, y = value, fill = RCP))+
-    geom_boxplot() +
+    geom_boxplot(outlier.size=1, outlier.color = "grey30")+
     labs(x = "Period", y = "Change compared to baseline period [%]") +
     theme_bw()+
     facet_wrap(~indi,  scales = "free_y")
+  
+  if(length(font_size)>0){
+    fig <- fig + 
+      theme(text = element_text(size=font_size))
+  }
+
   return(fig)
+}
+
+# Calculate whisker limits
+lim <- function(x) {
+  q1 <- quantile(x, 0.25, na.rm = TRUE)
+  q3 <- quantile(x, 0.75, na.rm = TRUE)
+  iqr <- q3 - q1
+  lower_limit <- q1 - 1.5 * iqr
+  upper_limit <- q3 + 1.5 * iqr
+  return(c(lower_limit, upper_limit))
 }
 
