@@ -142,7 +142,7 @@ m_dir <- m_dir[!endsWith(m_dir, "SWIFT")]
 print_prt <- read_lines(paste0(tmp_setup_path,'/print.prt'), lazy = FALSE)
 print_prt <- gsub(" y ", " n ", print_prt)
 
-print_prt[10] <- "basin_wb                     n             y             n             y  "
+print_prt[11] <- "basin_wb                     n             y             n             y  "
 print_prt[14] <- "basin_pw                     n             y             n             y  "
 print_prt[15] <- "basin_aqu                    n             y             n             y  "
 print_prt[33] <- "hru_wb                       n             y             n             y  "
