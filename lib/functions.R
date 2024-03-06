@@ -78,7 +78,7 @@ throw_box <- function(df, vars, drop_outliers = FALSE, font_size = NULL){
     # Filter out outliers
     df <- df %>%
       left_join(group_by(., indi) %>%
-                  summarize(l_lim = lim(value)[1], u_lim = lim(value)[2]), by = "indi") %>%
+                  dplyr::summarise(l_lim = lim(value)[1], u_lim = lim(value)[2]), by = "indi") %>%
       filter(value >= l_lim & value <= u_lim)
     
     message("Number of outliers removed: ", nb_rec - length(df$indi))

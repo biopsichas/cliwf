@@ -35,6 +35,11 @@ outflow_reach <- 43
 crop_sel <- c("wwht","trit","canp","barl","csil","corn","sgbt","onio","mint","lett","crrt","fesc","alfa") 
 
 ## Grain units
+
+#If you want to use grain units to normalize the basin wide sum of crop yields by crop-specific
+# nutritional values, please specify grain units for relevant crops
+# The grain units must be applicable to dry mass!!!
+
 grain_units <- data.frame('alfa' = 1.163, 'csil' = 1.071, 'wwht' = 1.209, 
                           'barl' = 1.163, 'sgbt' = 1, 'canp' = 1, 'corn' = 1.071,
                           'crrt' = 1, 'fesc' = 1, 'lett' = 1, 'mint' = 1, 'onio' = 1,

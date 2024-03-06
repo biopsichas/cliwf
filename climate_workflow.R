@@ -296,7 +296,7 @@ df_plot_long  <- df_plot_long[!grepl("_H$", df_plot_long$scen_name),] %>%
   mutate(scen_base = gsub("_[[:alpha:]]*$","",scen_name)) %>% 
   left_join(df_plot_long[grepl("_H$", df_plot_long$scen_name),] %>% 
               mutate(scen_base = gsub("_[[:alpha:]]*$","",scen_name)) %>% 
-              rename(value_base = value) %>% 
+              dplyr::rename(value_base = value) %>% 
               select(-scen_name), by = c("scen_base", "indi")) %>% 
   mutate(value = round(100*(value/value_base-1), 3)) %>% 
   select(-ends_with("base")) %>%
@@ -324,6 +324,10 @@ throw_box(df_plot_long, c("precip", "snofall", "snomlt", "pet", "et", "perc",
 #Second plot - flow indicators (some can be removed if not relevant, others can be added)
 throw_box(df_plot_long, c("Q_mean", "Q_p95", "Q_p90", "Q_p50", "Q_p10", 
                           "Q_p90p10", "Q_low_days", "Q_high_days"))
+
+# #throw_box funtion could be addapted to remove outliers or increase font size
+# throw_box(df_plot_long, c("Q_mean", "Q_p95", "Q_p90", "Q_p50", "Q_p10", 
+#                           "Q_p90p10", "Q_low_days", "Q_high_days"), drop_outliers = TRUE, font_size = 14)
 
 #Third plot - water quality indicators (some can be removed if not relevant, others can be added)
 throw_box(df_plot_long, c("Nload", "Nconc_days", "N_loss","Pload", "Pconc_days", "P_loss"))

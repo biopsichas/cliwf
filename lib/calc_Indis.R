@@ -239,7 +239,7 @@ ind_cha_dayI <- function(path,
         # Group data by channel (replace "name" with the actual column name for channel)
         max_min_ratio <- df_selected %>%
           group_by(name) %>% 
-          summarise(
+          dplyr::summarise(
             max_discharge = max(flo_out, na.rm = TRUE),
             min_discharge = min(flo_out, na.rm = TRUE),
             extreme_streamflow_ratio = max_discharge / min_discharge
@@ -263,7 +263,7 @@ ind_cha_dayI <- function(path,
         # Group data by channel (replace "name" with the actual column name for channel)
         p50 <- df_selected %>%
           group_by(name) %>% 
-          summarise(
+          dplyr::summarise(
             p50_discharge = quantile(flo_out, probs = 0.50, na.rm = TRUE)
           )
         
@@ -282,7 +282,7 @@ ind_cha_dayI <- function(path,
         # Group data by channel (replace "name" with the actual column name for channel)
         Q_p95p05 <- df_selected %>%
           group_by(name) %>%
-          summarise(
+          dplyr::summarise(
             p05_discharge = quantile(flo_out, probs = 0.05, na.rm = TRUE),
             p95_discharge = quantile(flo_out, probs = 0.95, na.rm = TRUE),
             extreme_streamflow_ratio = p95_discharge / p05_discharge
@@ -304,7 +304,7 @@ ind_cha_dayI <- function(path,
         # Group data by channel (replace "name" with the actual column name for channel)
         Q_p90p10 <- df_selected %>%
           group_by(name) %>%
-          summarise(
+          dplyr::summarise(
             p10_discharge = quantile(flo_out, probs = 0.10, na.rm = TRUE),
             p90_discharge = quantile(flo_out, probs = 0.90, na.rm = TRUE),
             extreme_streamflow_ratio = p90_discharge / p10_discharge
@@ -429,7 +429,7 @@ ind_cha_dayI <- function(path,
           # Group data by channel (replace "name" with the actual column name for channel)
           max_min_ratio <- channel_sd_day %>%
             group_by(name) %>% 
-            summarise(
+            dplyr::summarise(
               max_discharge = max(flo, na.rm = TRUE),
               min_discharge = min(flo, na.rm = TRUE),
               extreme_streamflow_ratio = max_discharge / min_discharge
@@ -450,7 +450,7 @@ ind_cha_dayI <- function(path,
           # Group data by channel (replace "name" with the actual column name for channel)
           p50 <- channel_sd_day %>%
             group_by(name) %>% 
-            summarise(
+            dplyr::summarise(
               p50_discharge = quantile(flo, probs = 0.50, na.rm = TRUE)
             )
           
@@ -467,7 +467,7 @@ ind_cha_dayI <- function(path,
           # Group data by channel (replace "name" with the actual column name for channel)
           Q_p95p05 <- channel_sd_day %>%
             group_by(name) %>%
-            summarise(
+            dplyr::summarise(
               p05_discharge = quantile(flo, probs = 0.05, na.rm = TRUE),
               p95_discharge = quantile(flo, probs = 0.95, na.rm = TRUE),
               extreme_streamflow_ratio = p95_discharge / p05_discharge
@@ -487,7 +487,7 @@ ind_cha_dayI <- function(path,
           # Group data by channel (replace "name" with the actual column name for channel)
           Q_p90p10 <- channel_sd_day %>%
             group_by(name) %>%
-            summarise(
+            dplyr::summarise(
               p10_discharge = quantile(flo, probs = 0.10, na.rm = TRUE),
               p90_discharge = quantile(flo, probs = 0.90, na.rm = TRUE),
               extreme_streamflow_ratio = p90_discharge / p10_discharge
@@ -574,7 +574,6 @@ ind_cha_dayII <- function(path,
       # Read file
       channel_sd_day <- read.table(paste0(path[i],'/cha_day.out'), h=T)
       names(channel_sd_day)[c(5,6)] <- c('type','name')
-      
       if('Q_maxmin' %in% ind | 'Q_max' %in% ind  | 'Q_min' %in% ind | 'all' %in% ind){
         
         # convert m?/day to m?/s
@@ -586,15 +585,16 @@ ind_cha_dayII <- function(path,
         # Group data by channel (replace "name" with the actual column name for channel)
         max_min_ratio <- channel_sd_day %>%
           group_by(name) %>% 
-          summarise(
+          dplyr::summarise(
             max_discharge = max(flo, na.rm = TRUE),
             min_discharge = min(flo, na.rm = TRUE),
             extreme_streamflow_ratio = max_discharge / min_discharge
           )
-        
+
         df_out[i,2] <- round(max_min_ratio$max_discharge[which(max_min_ratio$name==channel)],3)
         df_out[i,8] <- round(max_min_ratio$min_discharge[which(max_min_ratio$name==channel)],3)
         df_out[i,9] <- round(max_min_ratio$extreme_streamflow_ratio[which(max_min_ratio$name==channel)],3)
+
       }
       if('Q_p50' %in% ind | 'all' %in% ind){
         
@@ -607,7 +607,7 @@ ind_cha_dayII <- function(path,
         # Group data by channel (replace "name" with the actual column name for channel)
         p50 <- channel_sd_day %>%
           group_by(name) %>% 
-          summarise(
+          dplyr::summarise(
             p50_discharge = quantile(flo, probs = 0.50, na.rm = TRUE)
           )
         
@@ -624,7 +624,7 @@ ind_cha_dayII <- function(path,
         # Group data by channel (replace "name" with the actual column name for channel)
         Q_p95p05 <- channel_sd_day %>%
           group_by(name) %>%
-          summarise(
+          dplyr::summarise(
             p05_discharge = quantile(flo, probs = 0.05, na.rm = TRUE),
             p95_discharge = quantile(flo, probs = 0.95, na.rm = TRUE),
             extreme_streamflow_ratio = p95_discharge / p05_discharge
@@ -644,7 +644,7 @@ ind_cha_dayII <- function(path,
         # Group data by channel (replace "name" with the actual column name for channel)
         Q_p90p10 <- channel_sd_day %>%
           group_by(name) %>%
-          summarise(
+          dplyr::summarise(
             p10_discharge = quantile(flo, probs = 0.10, na.rm = TRUE),
             p90_discharge = quantile(flo, probs = 0.90, na.rm = TRUE),
             extreme_streamflow_ratio = p90_discharge / p10_discharge
@@ -672,7 +672,7 @@ ind_cha_dayII <- function(path,
         # Calculate the frequency of exceeding the thresholds for each "unit" (channel)
         frequency_summary_mean <- channel_sd_day %>%
           group_by(name) %>%
-          summarize(
+          dplyr::summarise(
             freq_below_threshold_lowQ = mean(flo < threshold_lowQ, na.rm = TRUE),
             freq_below_threshold_highQ = mean(flo < threshold_highQ, na.rm = TRUE),
             freq_below_threshold_N = mean(N_conc_mgl < threshold_N, na.rm = TRUE),
@@ -769,7 +769,7 @@ ind_cha_dayII <- function(path,
           # Group data by channel (replace "name" with the actual column name for channel)
           max_min_ratio <- channel_sd_day %>%
             group_by(name) %>% 
-            summarise(
+            dplyr::summarise(
               max_discharge = max(flo, na.rm = TRUE),
               min_discharge = min(flo, na.rm = TRUE),
               extreme_streamflow_ratio = max_discharge / min_discharge
@@ -790,7 +790,7 @@ ind_cha_dayII <- function(path,
           # Group data by channel (replace "name" with the actual column name for channel)
           p50 <- channel_sd_day %>%
             group_by(name) %>% 
-            summarise(
+            dplyr::summarise(
               p50_discharge = quantile(flo, probs = 0.50, na.rm = TRUE)
             )
           
@@ -807,7 +807,7 @@ ind_cha_dayII <- function(path,
           # Group data by channel (replace "name" with the actual column name for channel)
           Q_p95p05 <- channel_sd_day %>%
             group_by(name) %>%
-            summarise(
+            dplyr::summarise(
               p05_discharge = quantile(flo, probs = 0.05, na.rm = TRUE),
               p95_discharge = quantile(flo, probs = 0.95, na.rm = TRUE),
               extreme_streamflow_ratio = p95_discharge / p05_discharge
@@ -827,7 +827,7 @@ ind_cha_dayII <- function(path,
           # Group data by channel (replace "name" with the actual column name for channel)
           Q_p90p10 <- channel_sd_day %>%
             group_by(name) %>%
-            summarise(
+            dplyr::summarise(
               p10_discharge = quantile(flo, probs = 0.10, na.rm = TRUE),
               p90_discharge = quantile(flo, probs = 0.90, na.rm = TRUE),
               extreme_streamflow_ratio = p90_discharge / p10_discharge
