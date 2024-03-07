@@ -207,7 +207,7 @@ txt_info <- foreach (d = m_dir) %dopar% {
   files.out.aa <- dir(getwd(), pattern = 'aa')
   files.out.mon <- dir(getwd(), pattern = 'mon')
   files.out.day <- dir(getwd(), pattern = 'day')
-  files.help <- c('hru.con', 'hru_agr.txt') # please provide hru_agr.txt file 
+  files.help <- c('hru.con') 
   ## (cropland hru names) in txt folder
   file.copy(c(files.out.aa,files.out.mon,files.out.day,files.help), cal, overwrite = T)
   file.remove(c(files.out.aa,files.out.mon,files.out.day,files.help))
