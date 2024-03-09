@@ -596,7 +596,8 @@ ind_cha_dayII <- function(path,
           group_by(name,yr) %>% 
           dplyr::summarise(
             max_discharge_yr = max(flo, na.rm = TRUE),
-            min_discharge_yr = min(flo, na.rm = TRUE),
+            min_discharge_yr = min(flo, na.rm = TRUE), 
+            .groups = 'drop'
           ) %>% 
           group_by(name) %>% 
           dplyr::summarise(

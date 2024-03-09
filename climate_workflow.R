@@ -71,7 +71,7 @@ if(!file.exists(paste0(tmp_setup_path, "/", "landuse.lum.bak"))) {
             to = paste0(tmp_setup_path, "/", "landuse.lum", ".bak"), overwrite = TRUE)
 }
 
-## Updating it
+## Updating it!!! Please adjust the script for your CS (provided example for CS4)
 source('lib/read_and_modify_landuse_lum.R')
 
 ##------------------------------------------------------------------------------
@@ -130,6 +130,14 @@ txt_info <- foreach(d = m_dir, .packages = c("SWATfarmR", "tidyverse",
                                  "stringr")) %dopar% {write_mgt(d, periods)}
 ##Clean after
 stopCluster(cl)
+
+##Alternative way of running parallelized SWATfarmR
+# library(doFuture)
+# 
+# future::plan(multisession, workers = 30)
+# 
+# txt_info <- foreach(d = m_dir, .options.future = list(packages = c("SWATfarmR", "tidyverse", "stringr"),
+#                                                       globals = structure(TRUE, add = "frm"))) %dofuture% {write_mgt(d, periods)}
 
 ##------------------------------------------------------------------------------
 ## 7) Make sure the right outputs is printed
@@ -245,10 +253,31 @@ path <- paste(tmp_path, "sim", sep = "/")
 ## (aggregated comparison)
 r_dir <- list.dirs(path, recursive = TRUE)[-1]
 rch <- sprintf("cha%03d", outflow_reach)
+
+# threshold for low flow
+# the number of days below this threshold will later be calculated
+# default value is the 5th percentile of rcp26 for the baseline period (average across all rcms)
+# feel free to use another threshold value!!
+tmp_df <- ind_cha_dayII(r_dir, rch, 'Q_p95p05', ensemble=F)
+threshold_lowQ <- mean(tmp_df[seq(2,17,3),8])  #adjust channel
+
+# threshold for high flow
+# the number of days beyond this threshold will later be calculated
+# default value is the 95th percentile of rcp26 for the baseline period (average across all rcms)
+# feel free to use another threshold value!!
+
+threshold_highQ <- mean(tmp_df[seq(2,17,3),4])  #adjust channel
+
+###  collect indicators related to the average annual water balance
 cha_aa_all <- ind_cha_aa(r_dir, rch) #adjust channel
 
 ###  collect indicators related to the daily dynamics Water, N, P, Sed
-cha_day_all <- ind_cha_dayII(r_dir, rch, 'all') #adjust channel
+cha_day_all <- ind_cha_dayII(r_dir, rch, 'all',
+                             threshold_lowQ = threshold_lowQ,
+                             threshold_highQ = threshold_highQ,
+                             threshold_N = threshold_N,
+                             threshold_P = threshold_P,
+                             threshold_Sed = threshold_Sed) #adjust channel
 
 ###  collect HRU-based indicators related to water quality (average annual losses)
 hru_aa_nb_all <- ind_hru_aa_nb(r_dir) #adjust channel
