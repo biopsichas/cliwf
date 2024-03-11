@@ -41,10 +41,13 @@ crop_sel <- c("wwht","trit","canp","barl","csil","corn","sgbt","onio","mint",
 #by crop-specific nutritional values, please specify grain units for relevant crops
 # The grain units must be applicable to dry mass!!!
 
-grain_units <- data.frame('alfa' = 1.163, 'csil' = 1.071, 'wwht' = 1.209, 
-                          'barl' = 1.163, 'sgbt' = 1, 'canp' = 1, 'corn' = 1.071,
-                          'crrt' = 1, 'fesc' = 1, 'lett' = 1, 'mint' = 1, 'onio' = 1,
-                          'trit' =1)
+## Values are provided on: 
+## OPTAIN Cloud>WPs&Tasks>WP4>Tools to share>OPTAIN_crops_drymass_grain_units_v2.xlsx
+
+grain_units <- data.frame('alfa' = 0.682, 'csil' = 1.071, 'wwht' = 1.209, 
+                          'barl' = 1.163, 'sgbt' = 1, 'canp' = 1.429, 'corn' = 1.071,
+                          'crrt' = 1, 'fesc' = 0.718, 'lett' = 1, 'mint' = 1, 'onio' = 1,
+                          'trit' = 1.163)
 
 ## Thresholds for nutrient and sediment concentrations for output analysis
 
