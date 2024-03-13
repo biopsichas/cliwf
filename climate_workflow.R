@@ -365,3 +365,8 @@ throw_box(df_plot_long, c("Nload", "Nconc_days", "N_loss","Pload", "Pconc_days",
 throw_box(df_plot_long, c("canp_yld_t_ha", "barl_yld_t_ha", "corn_yld_t_ha", 
                           "sgbt_yld_t_ha", "onio_yld_t_ha", "fesc_yld_t_ha", 
                           "alfa_yld_t_ha", "trit_yld_t_ha", "wwht_yld_t_ha"))
+
+##------------------------------------------------------------------------------
+## 13)  DATA FOR THE SYNTHESIS REPORT (send to Svajunas & Mikolaj)
+##------------------------------------------------------------------------------
+
