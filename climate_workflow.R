@@ -53,7 +53,7 @@ exe_copy_run("lib", tmp_setup_path, "write.exe")
 ## Deleting unnecessary files
 unlink(paste0(tmp_setup_path, "/", 
               setdiff(list.files(tmp_setup_path), c("plant.ini", "hru-data.hru", 
-                                              "landuse.lum", "management.sch"))))
+                                              "landuse.lum"))))
 
 ## Copying all your current setup files to tmp directory
 file.copy(c(setdiff(list.files(path = setup_dir, full.names = TRUE), 
@@ -112,8 +112,8 @@ m_dir <- list.dirs(tmp_result_path, recursive = TRUE)[-1]
 ##Copy files from setup directory required for SWATfarmR
 walk(m_dir, ~file.copy(paste0(tmp_setup_path, "/",
                               c("file.cio", "plant.ini", "hru-data.hru", "landuse.lum",
-                                "management.sch", "rout_unit.def", "rout_unit.ele",
-                                "soils.sol", "topography.hyd", "fertilizer.frt",
+                                "rout_unit.def", "rout_unit.ele", "soils.sol", 
+                                "topography.hyd", "fertilizer.frt",
                                 "plants.plt",
                                 "tillage.til")), .x), overwrite = FALSE)
 

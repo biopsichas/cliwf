@@ -50,9 +50,17 @@ write_mgt <- function(pth, p = periods){
     stop("Folder's name last letter should correspond to period name letter.
          Please rename them to fit this!!!")
   }
-  # frm <- SWATfarmR::farmr_project$new(project_name = 'frm', project_path = pth)
-  frm <- SWATfarmR::farmr_project$new(project_name = 'frm', project_path = pth, 
-                                      project_type = 'environment') ## If you your version farmR >= 4.0.0
+  ## If you your version farmR >= 4.0.0
+  if(startsWith(as.character(packageVersion("SWATfarmR")), "4.")){
+    frm <- SWATfarmR::farmr_project$new(project_name = 'frm', project_path = pth, 
+                                        project_type = 'environment') 
+    .GlobalEnv$frm <- frm
+  } else if(startsWith(as.character(packageVersion("SWATfarmR")), "3.2.0")){
+    frm <- SWATfarmR::farmr_project$new(project_name = 'frm', project_path = pth)
+  } else {
+    stop("SWATfarmR version should be > 4.0.0 or special version 3.2.0 
+         from OPTAIN Cloud>WPs&Tasks>WP4>Task4.4>Tools to share>workflow_scripts>SWATfarmR_3.2.0.zip")
+  }
   api <- variable_decay(frm$.data$variables$pcp, -5,0.8)
   asgn <- select(frm$.data$meta$hru_var_connect, hru, pcp)
   frm$add_variable(api, "api", asgn)
