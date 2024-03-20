@@ -373,3 +373,59 @@ throw_box(df_plot_long, c("canp_yld_t_ha", "barl_yld_t_ha", "corn_yld_t_ha",
 saveRDS(df_plot_long, file = paste0(tmp_path, "/climate_report.rds"))
 
 ##------------------------------------------------------------------------------
+## 14)  Collect HRU results and map (under development)
+##------------------------------------------------------------------------------
+
+## Adding some libraries
+library(sf)
+library(units)
+library(RColorBrewer)
+library(tidyverse)
+
+## Path to the results
+output_path <- list.dirs("tmp/sim", recursive = TRUE)[-1]
+## Path to vector data (after SWATbuildR)
+vect_path <- 'D:/_WORKFLOW/Temp/buildr_project/cs4_project/data/vector'
+
+## Set the names for the scenarios
+c <- expand.grid(c("rcp26", "rcp45", "rcp85"), c("_H", "_N", "_E"))
+
+## Read the results
+results <- map2(c[1][[1]], c[2][[1]], ~read_model_output(output_path[grepl(.x, output_path)&grepl(.y, output_path)], 
+                                                         hru_shp_path = paste0(vect_path,'/hru.shp'),
+                                                         cha_shp_path = paste0(vect_path,'/cha.shp'),
+                                                         res_shp_path = paste0(vect_path,'/res.shp'))) %>% 
+  set_names(paste0(c[1][[1]], c[2][[1]]))
+
+## Recombine the results by the file type
+results_acclist <- list()
+for(n in names(results)){
+  for(nn in names(results[[n]])){
+    results_acclist[[nn]] <- bind_rows(results_acclist[[nn]], results[[n]][[nn]] %>% 
+                                         mutate(scen = n) %>% 
+                                         separate(scen, c("RCP", "PERIOD"), sep = "_") %>% 
+                                         mutate(PERIOD = case_when(PERIOD == "H" ~ "Historical",
+                                                                   PERIOD == "N" ~ "Near future",
+                                                                   PERIOD == "E" ~ "End of century"),
+                                                RCP = toupper(RCP)))
+  }
+}
+
+## Add the factors to the results
+for(n in names(results_acclist)){
+  results_acclist[[n]][["RCP"]] <- factor(results_acclist[[n]][["RCP"]], levels = c("RCP26", "RCP45", "RCP85"), ordered = TRUE)
+  results_acclist[[n]][["PERIOD"]] <- factor(results_acclist[[n]][["PERIOD"]], levels = c("Historical", "Near future", "End of century"), ordered = TRUE)
+}
+
+## Print the names of the variables for the map (example of only one table)
+## There are "hru_wb_sq" "hru_ls_sq" "hru_pw_sq" "cha_sq" tables available
+names(results_acclist$hru_pw_sq)
+
+## Plot the map (example of only one table and only one variable hru_pw_sq and strstmp)
+ggplot() +
+  geom_sf(data = results_acclist$hru_pw_sq, mapping = aes(fill = strstmp), colour = NA) +
+  scale_fill_distiller(palette = "Spectral")+
+  facet_grid(RCP ~ PERIOD)+
+  theme_minimal()+
+  theme(axis.text = element_blank())
+
