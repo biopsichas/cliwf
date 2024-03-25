@@ -411,6 +411,40 @@ for(n in names(results)){
   }
 }
 
+## Calculate percentage differences
+## For each file in the list 
+for(n in names(results_acclist)[!endsWith(names(results_acclist), "_pr")]){
+  l <- results_acclist[[n]]
+  df <- NULL
+  p <- as.vector(unique(l$PERIOD))
+  rcp <- as.vector(unique(l$RCP))
+  ## For each RCP scenario
+  for(rcp1 in rcp){
+    ## Fix geometry names, geometries and RCP scenario names
+    col_12 <- l[c("name", "RCP", "PERIOD")] %>% 
+      .[.$RCP == rcp1 & .$PERIOD == p[1],] %>%
+      .[c(1, 2)]
+    ## All the other columns to be used in calculation
+    col_r <- l %>% st_drop_geometry %>% 
+      .[.$RCP == rcp1 & .$PERIOD == p[1],] %>%
+      .[c(16:ncol(.)-2)]
+    ## For two climate periods
+    for(p1 in p[c(2:3)]){
+      ##Calculating percentages 
+      df1 <- l %>% st_drop_geometry %>% 
+        .[.$RCP == rcp1 & .$PERIOD == p1,] %>%
+        .[c(16:ncol(.)-2)] %>% 
+        {100*(1 - (. - col_r)/col_r)} %>% 
+        bind_cols(col_12, .) %>% 
+        mutate(PERIOD = p1)
+      ## Combining into one data frame
+      if(is.null(df)) df <- df1 else df <- bind_rows(df, df1)
+    }
+  }
+  ## Saving into the same list
+  results_acclist[[paste0(n, "_pr")]] <- select(df, name, RCP, PERIOD, everything()) 
+}
+
 ## Add the factors to the results
 for(n in names(results_acclist)){
   results_acclist[[n]][["RCP"]] <- factor(results_acclist[[n]][["RCP"]], levels = c("RCP26", "RCP45", "RCP85"), ordered = TRUE)
@@ -422,6 +456,8 @@ for(n in names(results_acclist)){
 names(results_acclist$hru_pw_sq)
 
 ## Plot the map (example of only one table and only one variable hru_pw_sq and strstmp)
+## percentage difference tables end with _pr, they are comparison with same RCP historical period
+
 ggplot() +
   geom_sf(data = results_acclist$hru_pw_sq, mapping = aes(fill = strstmp), colour = NA) +
   scale_fill_distiller(palette = "Spectral")+
