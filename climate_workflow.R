@@ -90,7 +90,7 @@ if (file.exists(tmp_result_path)) {
 dir.create(tmp_result_path, recursive = TRUE)
 
 ## Prepare parallelization
-cores <- detectCores() - 1
+if(is.null(cores)) cores <- detectCores() - 1
 cl <- makeCluster(cores,  outfile="")
 registerDoParallel(cl)
 
