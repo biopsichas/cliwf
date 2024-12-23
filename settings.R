@@ -28,7 +28,7 @@ periods <- list(c("H", "1988-01-01", "2020-12-31"),
                 c("E", "2066-01-01", "2098-12-31"))
 
 ## SWAT excutable name
-swat_exe <- 'Rev_61_0_64rel.exe'
+swat_exe <- 'SWATp_jan_sept.exe'
 
 ## Outflow reach
 outflow_reach <- 16
