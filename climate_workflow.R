@@ -10,7 +10,11 @@
 
 ##Load libraries
 library(SWATfarmR)
-library(SWATprepR)
+if (packageVersion("SWATprepR") < "1.0.8"){
+  stop("The version of 'SWATprepR' must be at least 1.0.8. Update the package!") 
+} else {
+  library(SWATprepR)
+}
 library(SWATrunR)
 library(tidyverse)
 library(stringr)
@@ -20,6 +24,9 @@ library(doParallel)
 library(foreach)
 library(DBI)
 library(RSQLite)
+library(sf)
+library(units)
+library(RColorBrewer)
 
 source('settings.R')
 source('lib/functions.R')
@@ -373,19 +380,13 @@ throw_box(df_plot_long, c("canp_yld_t_ha", "barl_yld_t_ha", "corn_yld_t_ha",
 saveRDS(df_plot_long, file = paste0(tmp_path, "/climate_report.rds"))
 
 ##------------------------------------------------------------------------------
-## 14)  Collect HRU results and map (under development)
+## 14)  Collect HRU results and map
 ##------------------------------------------------------------------------------
-
-## Adding some libraries
-library(sf)
-library(units)
-library(RColorBrewer)
-library(tidyverse)
 
 ## Path to the results
 output_path <- list.dirs("tmp/sim", recursive = TRUE)[-1]
-## Path to vector data (after SWATbuildR)
-vect_path <- 'D:/_WORKFLOW/Temp/buildr_project/cs4_project/data/vector'
+## Path to vector data 
+vect_path <- 'data/vector'
 
 ## Set the names for the scenarios
 c <- expand.grid(c("rcp26", "rcp45", "rcp85"), c("_H", "_N", "_E"))
