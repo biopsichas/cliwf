@@ -4,7 +4,7 @@
 ## !!!MAKE YOUR MODIFICATIONS ONLY IN THIS SECTION!!!
 
 ## Cores, which could to be used 
-cores <- 15 ## if NULL max - 1 will be used
+cores <- 10 ## if NULL max - 1 will be used
 ## Path to the SWAT+ setup database (sqlite)
 db_path <- "data/cs5_project.sqlite"
 ## Define path where climate data are saved
