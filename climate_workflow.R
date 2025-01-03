@@ -2,12 +2,6 @@
 ## 1) Load (or install&load) libraries
 ##------------------------------------------------------------------------------
 
-# library(remotes)
-# !!!Please install SWATfarmR included in the workflow_script folder 
-# Rstudio/Tools/Install packages/Install from Package Archive File
-# remotes::install_github('chrisschuerz/SWATrunR@dev_run_scenario')
-# remotes::install_github("biopsichas/SWATprepR")
-
 ##Load libraries
 library(SWATfarmR)
 if (packageVersion("SWATprepR") < "1.0.8"){
