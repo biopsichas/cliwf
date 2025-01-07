@@ -15,8 +15,10 @@ setup_dir <- 'data/clean_setup'
 # Define the path to your management schedule input file (from Micha's SWATfarmR
 ## input script)
 mgt <- 'data/farmR_input.csv'
-##Directory to save results
+## Directory to save results
 tmp_path <- "tmp"
+## Define path to calibration.cal file
+cal_file <- "data/calibration.cal" ## if NULL, no calibration.cal will be included
 
 ## names of RCP scenarios (same as folder names)
 rcp <- c("rcp26", "rcp45", "rcp85")

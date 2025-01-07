@@ -184,10 +184,22 @@ write.table(paste(sprintf(c(rep('%12s', 4), '%20s'),
 ## Updating in the result directories
 overwrite_file("object.prt")
 
+## Updating file.cio and including calibration.cal file
 file_cio <- readLines(paste0(tmp_setup_path, "/", "file.cio"))
 file_cio[2] <- "simulation        time.sim          print.prt         object.prt        object.cnt        null "
+## Check if data folder contains calibration.cal file
+if(!is.null(cal_file) && file.exists(cal_file)){
+  file.copy(from = cal_file, 
+            to = paste0(tmp_setup_path, "/calibration.cal"), overwrite = TRUE)
+  if(!grepl("calibration.cal", file_cio[22], fixed = TRUE)){
+    file_cio[22] <- "chg               cal_parms.cal     calibration.cal   null              null              null              null              null              null              null              "
+  }
+  message("Calibration file is included in the setups and file.cio")
+} else {
+  warning("Calibration file is missing. Please provide correct 'calibration.cal' 
+          path or ignore the warning, if it is not needed.")
+}
 writeLines(file_cio, paste0(tmp_setup_path, "/", "file.cio"))
-
 overwrite_file("file.cio")
 
 ##------------------------------------------------------------------------------
@@ -238,19 +250,7 @@ path <- paste(tmp_path, "sim", sep = "/")
 ## 10)  Output analysis from Micha (warranty provided by Micha ;)
 ##------------------------------------------------------------------------------
 
-### In the following functions to calculate indicators are applied
-### Please adjust function parameters (e.g. channel name, see also header 
-## information of calc_Indis.R)
-### In case an ensemble of calibration files is provided (in folder cal_files), 
-## set ensemble=T
-### The resulting dataframe will provide you the ensemble mean as well as the 
-## ensemble minimum (lower) 
-### and maximum (upper) of the respective indicator
-### If no cal file ensemble can be provided, set ensemble=F 
-### (but then make sure you have a calibration.cal with fitted parameters in 
-## the txt folder)
-
-### collect average annual output of water quantity and quality at outlet channel 
+### Collect average annual output of water quantity and quality at outlet channel 
 ## (aggregated comparison)
 r_dir <- list.dirs(path, recursive = TRUE)[-1]
 rch <- sprintf("cha%03d", outflow_reach)
