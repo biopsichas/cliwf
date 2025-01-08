@@ -1,4 +1,4 @@
-SWAT+ input file updated soft calibration at 2024-12-17 22:32:56 and edited with SWATfarmR 2.0.5 on 2024-12-18 01:22:48
+SWAT+ input file updated soft calibration at 2024-12-24 13:39:03.422934 and edited with SWATfarmR 2.0.5 on 2024-12-24 14:41:18.472204
       id  name                          topo             hydro              soil            lu_mgt   soil_plant_init         surf_stor              snow             field
        1  hru0001                topohru0001           hyd0001            ZPP447          urmd_lum        soilplant1              null           snow001              null
        2  hru0002                topohru0002           hyd0002            ZPP447     agrl1_lum_2_1        soilplant1              null           snow001              null

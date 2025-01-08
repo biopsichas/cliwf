@@ -36,8 +36,7 @@ swat_exe <- 'SWATp_jan_sept.exe'
 outflow_reach <- 16
 
 ## Crop selection
-crop_sel <- c("corn", "wbar", "csil", "fesc", "wwht", "rngb", "soyb", "orcd",
-           "canp", "grap", "rnge", "frst")
+crop_sel <- c("corn", "wbar", "csil", "fesc", "wwht", "soyb", "canp", "grap")
 
 
 ## Grain units
