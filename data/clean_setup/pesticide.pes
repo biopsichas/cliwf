@@ -1,4 +1,4 @@
-pesticide.pes: written by SWAT+ editor v2.1.0 on 2024-12-17 22:30 for SWAT+ rev.2.1.4
+pesticide.pes: written by SWAT+ editor v2.1.0 on 2025-01-10 12:35 for SWAT+ rev.2.1.4
 name                  soil_ads     frac_wash    hl_foliage       hl_soil         solub      aq_hlife      aq_volat        mol_wt      aq_resus     aq_settle   ben_act_dep      ben_bury     ben_hlife  description
 245-tp              2600.00000       0.40000       5.00000      20.00000       2.50000       0.00700       0.00001       0.10000       0.00200       0.50000       0.30000       0.00200       0.05000  Silvex_Amine
 2plus2                20.00000       0.95000      10.00000      21.00000  660000.00000       0.00700       0.00001       0.10000       0.00200       0.50000       0.30000       0.00200       0.05000  Mecoprop

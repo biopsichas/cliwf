@@ -1,4 +1,4 @@
-reservoir.res: written by SWAT+ editor v2.1.0 on 2024-12-17 22:30 for SWAT+ rev.2.1.4
+reservoir.res: written by SWAT+ editor v2.1.0 on 2025-01-10 12:35 for SWAT+ rev.2.1.4
       id  name                          init               hyd               rel               sed               nut  
        1  res01                     initres1             res01     drawdown_days           sedres1           nutres1  
        2  res02                     initres1             res02     drawdown_days           sedres1           nutres1  
@@ -52,14 +52,3 @@ reservoir.res: written by SWAT+ editor v2.1.0 on 2024-12-17 22:30 for SWAT+ rev.
       50  res50                     initres1             res50     drawdown_days           sedres1           nutres1  
       51  res51                     initres1             res51     drawdown_days           sedres1           nutres1  
       52  res52                     initres1             res52     drawdown_days           sedres1           nutres1  
-      53  res53                     initres1             res53     drawdown_days           sedres1           nutres1  
-      54  res54                     initres1             res54     drawdown_days           sedres1           nutres1  
-      55  res55                     initres1             res55     drawdown_days           sedres1           nutres1  
-      56  res56                     initres1             res56     drawdown_days           sedres1           nutres1  
-      57  res57                     initres1             res57     drawdown_days           sedres1           nutres1  
-      58  res58                     initres1             res58     drawdown_days           sedres1           nutres1  
-      59  res59                     initres1             res59     drawdown_days           sedres1           nutres1  
-      60  res60                     initres1             res60     drawdown_days           sedres1           nutres1  
-      61  res61                     initres1             res61     drawdown_days           sedres1           nutres1  
-      62  res62                     initres1             res62     drawdown_days           sedres1           nutres1  
-      63  res63                     initres1             res63     drawdown_days           sedres1           nutres1  

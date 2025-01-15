@@ -1,4 +1,4 @@
-SWAT+ input file updated soft calibration at 2024-12-17 22:48:33
+SWAT+ input file updated soft calibration at 2024-12-17 09:07:46.709026
 name                       min_n         min_p         org_n         org_p         nh3_n           pathogens  description                   
 elem_n                         1             0             0             0             0                null  ElementalNitrogen             
 elem_p                         0             1             0             0             0                null  ElementalPhosphorous          
@@ -59,5 +59,5 @@ ceap_p_n                    0.42             0          0.58             0      
 ceap_p_p                       0          0.65             0          0.35             0         ceap_manure  Ceap_Manure_P_Fr_Past         
 ceap_h_n                    0.41             0          0.59             0         0.381         ceap_manure  Ceap_Manure_N_Fr_Hay          
 ceap_h_p                       0         0.653             0         0.347             0         ceap_manure  Ceap_Manure_P_Fr_Hay          
-comp_manure               0.0031        0.0024        0.0025        0.0012          0.99        fresh_manure  Comp_FreshManure              
-7:20:30                     0.07       0.08728             0             0             0                null  NPK                           
+comp_manure               0.0021        0.0016        0.0017        0.0008          0.99        fresh_manure  Comp_FreshManure              
+7:20:30                     0.02       0.08728             0             0             0                null  NPK                           
