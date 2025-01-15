@@ -48,10 +48,14 @@ crop_sel <- c("corn", "wbar", "csil", "fesc", "wwht", "soyb", "canp", "grap")
 ## Values are provided on: 
 ## OPTAIN Cloud>WPs&Tasks>WP4>Tools to share>OPTAIN_crops_drymass_grain_units_v2.xlsx
 
-grain_units <- data.frame('alfa' = 0.682, 'csil' = 1.071, 'wwht' = 1.209, 
-                          'barl' = 1.163, 'sgbt' = 1, 'canp' = 1.429, 'corn' = 1.071,
-                          'crrt' = 1, 'fesc' = 0.718, 'lett' = 1, 'mint' = 1, 'onio' = 1,
-                          'trit' = 1.163)
+grain_units <- data.frame('wbar' = 1.163, 
+                          'csil' = 1.071, 
+                          'wwht' = 1.209, 
+                          'fesc' = 0.718,
+                          'corn' = 1.071,
+                          'soyb' = 1, 
+                          'canp' = 1.3, 
+                          'grap' = 1)
 
 ## Thresholds for nutrient and sediment concentrations for output analysis
 
