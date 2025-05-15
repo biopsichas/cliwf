@@ -24,6 +24,7 @@ library(RColorBrewer)
 
 source('settings.R')
 source('lib/functions.R')
+source('lib/helper.R')
 
 ##------------------------------------------------------------------------------
 ## 2) Prepare fresh management files
