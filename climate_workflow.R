@@ -2,15 +2,13 @@
 ## 1) Load (or install&load) libraries
 ##------------------------------------------------------------------------------
 
-# library(remotes)
-# !!!Please install SWATfarmR included in the workflow_script folder 
-# Rstudio/Tools/Install packages/Install from Package Archive File
-# remotes::install_github('chrisschuerz/SWATrunR@dev_run_scenario')
-# remotes::install_github("biopsichas/SWATprepR")
-
 ##Load libraries
 library(SWATfarmR)
-library(SWATprepR)
+if (packageVersion("SWATprepR") < "1.0.8"){
+  stop("The version of 'SWATprepR' must be at least 1.0.8. Update the package!") 
+} else {
+  library(SWATprepR)
+}
 library(SWATrunR)
 library(tidyverse)
 library(stringr)
@@ -18,9 +16,14 @@ library(ggpubr)
 library(purrr)
 library(doParallel)
 library(foreach)
+library(DBI)
+library(RSQLite)
+library(sf)
+library(units)
+library(RColorBrewer)
 
 source('settings.R')
-source('functions.R')
+source('lib/functions.R')
 
 ##------------------------------------------------------------------------------
 ## 2) Prepare fresh management files
@@ -30,9 +33,17 @@ tmp_setup_path <- paste0(tmp_path, "/", "setup")
 ## Saving reference result files
 tmp_result_path <- paste0(tmp_path, "/", "results")
 
-## If the directory exists, delete the results directory. (Please be careful!!!)
+## !!!If the directory exists, delete the results directory. (Please be careful!!!)
 if (file.exists(tmp_path)) unlink(tmp_path, recursive = TRUE)
 dir.create(tmp_setup_path, recursive = TRUE)
+
+## This is needed for write.exe to work (if it is right after SWATbuildR).
+## Just writing a dot in project_config table.
+db <- dbConnect(RSQLite::SQLite(), db_path)
+project_config <- dbReadTable(db, 'project_config')
+project_config$input_files_dir <- "."
+dbWriteTable(db, 'project_config', project_config, overwrite = TRUE)
+dbDisconnect(db)
 
 ## Coping.sqline database to tmp directory
 file.copy(db_path, tmp_setup_path)
@@ -43,12 +54,12 @@ exe_copy_run("lib", tmp_setup_path, "write.exe")
 ## Deleting unnecessary files
 unlink(paste0(tmp_setup_path, "/", 
               setdiff(list.files(tmp_setup_path), c("plant.ini", "hru-data.hru", 
-                                              "landuse.lum", "management.sch"))))
+                                              "landuse.lum"))))
 
 ## Copying all your current setup files to tmp directory
 file.copy(c(setdiff(list.files(path = setup_dir, full.names = TRUE), 
                     list.files(path = setup_dir, 
-                               pattern = ".*.txt|.*.zip|.*success.fin|.*co2.out|.*simulation.out|.*plant.ini|.*hru-data.hru|.*landuse.lum|.*management.sch|.*.bak|.*.mgts|.*.farm|.*area_calc.out|.*checker.out|.*sqlite|.*diagnostics.out|.*erosion.out|.*files_out.out|.*.swf|.*.pcp|.*.tmp|.*.hmd|.*.slr|.*.wnd|.*.cli", full.names = TRUE)), paste(setup_dir, "soil_plant.ini", sep = "/")), 
+                               pattern = ".*.txt|.*.zip|.*success.fin|.*co2.out|.*simulation.out|.*plant.ini|.*hru-data.hru|.*landuse.lum|.*management.sch|.*.bak|.*.mgts|.*.farm|.*area_calc.out|.*checker.out|.*sqlite|.*diagnostics.out|.*erosion.out|.*files_out.out|.*.swf|.*.pcp|.*.tmp|.*.hmd|.*.slr|.*.wnd|.*.cli", full.names = TRUE)), paste(setup_dir, c("soil_plant.ini", "atmodep.cli"), sep = "/")), 
           tmp_setup_path)
 
 ##------------------------------------------------------------------------------
@@ -61,7 +72,7 @@ if(!file.exists(paste0(tmp_setup_path, "/", "landuse.lum.bak"))) {
             to = paste0(tmp_setup_path, "/", "landuse.lum", ".bak"), overwrite = TRUE)
 }
 
-## Updating it
+## Updating it!!! Please adjust the script for your CS (provided example for CS4)
 source('lib/read_and_modify_landuse_lum.R')
 
 ##------------------------------------------------------------------------------
@@ -80,7 +91,7 @@ if (file.exists(tmp_result_path)) {
 dir.create(tmp_result_path, recursive = TRUE)
 
 ## Prepare parallelization
-cores <- detectCores() - 2
+if(is.null(cores)) cores <- detectCores() - 1
 cl <- makeCluster(cores,  outfile="")
 registerDoParallel(cl)
 
@@ -102,8 +113,8 @@ m_dir <- list.dirs(tmp_result_path, recursive = TRUE)[-1]
 ##Copy files from setup directory required for SWATfarmR
 walk(m_dir, ~file.copy(paste0(tmp_setup_path, "/",
                               c("file.cio", "plant.ini", "hru-data.hru", "landuse.lum",
-                                "management.sch", "rout_unit.def", "rout_unit.ele",
-                                "soils.sol", "topography.hyd", "fertilizer.frt",
+                                "rout_unit.def", "rout_unit.ele", "soils.sol", 
+                                "topography.hyd", "fertilizer.frt",
                                 "plants.plt",
                                 "tillage.til")), .x), overwrite = FALSE)
 
@@ -121,58 +132,372 @@ txt_info <- foreach(d = m_dir, .packages = c("SWATfarmR", "tidyverse",
 ##Clean after
 stopCluster(cl)
 
-##------------------------------------------------------------------------------
-## 7) Run scenarios with SWATrunR and save results (very long)
-##------------------------------------------------------------------------------
-
-res <- run_scenario(project_path = setup_dir,
-                    scenario_path = tmp_result_path,
-                    output = results_to_save,
-                    version = "plus",
-                    years_skip = 3,
-                    n_thread = cores,
-                    keep_folder = TRUE)
-
-## Saving results just in case
-saveRDS(res, paste0(tmp_result_path, "/", "scenario_results.rds"))
-print("Finished climate runs!!!")
-
-##------------------------------------------------------------------------------
-## 7) Converting SWATrunR results into dataframe
-##------------------------------------------------------------------------------
-
-##Combine results into one dataframe
-df <- map_dfr(names(res$simulation), function(x){
-  map_dfr(names(res$simulation[[x]]), function(y){
-    data.frame(res$simulation[[x]][[y]], scenario = x, variable = y)
-  })
-})
-
-## Add missing columns, etc.
-mcols <- c("values", "RCP", "RCM", "period")
-df[mcols] <- data.frame(df$run_1, str_split_fixed(df$scenario, "_", 3))
-df$period <- factor(df$period, levels = c(periods[[1]][[1]], periods[[2]][[1]],
-                                          periods[[3]][[1]]))
-df <- df[c("date", "variable", mcols)]
-
-##------------------------------------------------------------------------------
-## 8) Preparing plots for results
-##------------------------------------------------------------------------------
-
-##Function for plotting
-plot_fig <- function(df, var_name){
-  ggplot(df[df$variable == var_name,], aes(x = date, y = values, colour = RCP))+
-    geom_line()+
-    # geom_smooth(method=lm, formula = y ~ x)+
-    labs(x = "Date", y = paste0("Units of ", toupper(var_name))) +
-    theme_bw()+
-    facet_grid(RCM ~ period,  scales = "free_x")
+## Check if preparation of any scenarios failed.
+subdirs <- list.dirs(path = tmp_result_path, recursive = TRUE, full.names = TRUE)
+missing_management <- subdirs[!file.exists(file.path(subdirs, "management.sch")) & subdirs != tmp_result_path]
+if(length(missing_management)!=0){
+  print(paste0("These folder have failed: ", missing_management))
 }
 
-##Prepare combined plot
-l <- map(unique(df$variable), ~plot_fig(df, .x))
-names(l) <- unique(df$variable)
+## Part before this line is better to run in CMD with Rscript.exe to avoid parallezation errors!!!
+stop("~~~~ DONE!!! ~~~")
 
-## Save it
-saveRDS(l, paste0(tmp_result_path, "/", "plot_results.rds"))
-print("Happy end :) Finished plot preparation preparation!!!")
+
+# ##Alternative way of running parallelized SWATfarmR
+# library(doFuture)
+# 
+# # Set up future plan
+# plan(multisession, workers = cores)
+# 
+# # Run the parallel loop
+# txt_info <- foreach(d = m_dir, 
+#                     .export = c("write_mgt", "periods"),  # export necessary functions/objects
+#                     .options.future = list(globals = TRUE)) %dofuture% {
+#                       write_mgt(d, periods)
+#                     }
+# 
+# 
+# ## Check if preparation of any scenarios failed.
+# subdirs <- list.dirs(path = tmp_result_path, recursive = TRUE, full.names = TRUE)
+# missing_management <- subdirs[!file.exists(file.path(subdirs, "management.sch")) & subdirs != tmp_result_path]
+# if(length(missing_management)!=0){
+#   print(paste0("These folder have failed: ", missing_management))
+# }
+
+# 
+# future::plan(multisession, workers = 30)
+# 
+# txt_info <- foreach(d = m_dir, .options.future = list(packages = c("SWATfarmR", "tidyverse", "stringr"),
+#                                                       globals = structure(TRUE, add = "frm"))) %dofuture% {write_mgt(d, periods)}
+
+##------------------------------------------------------------------------------
+## 7) Make sure the right outputs is printed
+##------------------------------------------------------------------------------
+
+## Remove the SWIFT directories, which might be created by SWAT runs
+m_dir <- m_dir[!endsWith(m_dir, "SWIFT")]
+
+## Input for the print file
+print_prt <- read_lines(paste0(tmp_setup_path,'/print.prt'), lazy = FALSE)
+print_prt <- gsub(" y ", " n ", print_prt)
+
+print_prt[11] <- "basin_wb                     n             y             n             y  "
+print_prt[14] <- "basin_pw                     n             y             n             y  "
+print_prt[15] <- "basin_aqu                    n             y             n             y  "
+print_prt[33] <- "hru_wb                       n             y             n             y  "
+print_prt[34] <- "hru_nb                       n             n             n             y  "
+print_prt[35] <- "hru_ls                       n             n             n             y  "
+print_prt[36] <- "hru_pw                       n             n             n             y  "
+print_prt[42] <- "channel_sd                   n             n             n             y  "
+print_prt[44] <- "reservoir                    n             n             n             y  "
+
+write_lines(print_prt, paste0(tmp_setup_path,'/print.prt'))
+
+## Updating in the result directories
+overwrite_file("print.prt")
+
+## Write object.prt
+obj_prt_path <- paste0(tmp_setup_path,'/object.prt')
+unlink(obj_prt_path)
+write.table(paste0("object.prt", ": written by the climate-workflow on ", Sys.time()), 
+            obj_prt_path, append = FALSE, sep = "\t", 
+            dec = ".", row.names = FALSE, col.names = FALSE, quote = FALSE)
+write.table(paste(sprintf(c(rep('%12s', 4), '%20s'), 
+                          c("ID", "OBJ_TYP", "OBJ_TYP_NO", "HYD_TYP", "FILENAME")), 
+                          collapse = ' '), obj_prt_path , append = TRUE, 
+            sep = "\t", dec = ".", row.names = FALSE, col.names = FALSE, quote = FALSE)
+write.table(paste(sprintf(c(rep('%12s', 4), '%20s'), 
+                          c("1", "sdc", as.character(outflow_reach), "tot", "cha_day.out")), 
+                  collapse = ' '), obj_prt_path , append = TRUE, 
+            sep = "\t", dec = ".", row.names = FALSE, col.names = FALSE, quote = FALSE)
+
+## Updating in the result directories
+overwrite_file("object.prt")
+
+## Updating file.cio and including calibration.cal file
+file_cio <- readLines(paste0(tmp_setup_path, "/", "file.cio"))
+file_cio[2] <- "simulation        time.sim          print.prt         object.prt        object.cnt        null "
+## Check if data folder contains calibration.cal file
+if(!is.null(cal_file) && file.exists(cal_file)){
+  file.copy(from = cal_file, 
+            to = paste0(tmp_setup_path, "/calibration.cal"), overwrite = TRUE)
+  if(!grepl("calibration.cal", file_cio[22], fixed = TRUE)){
+    file_cio[22] <- "chg               cal_parms.cal     calibration.cal   null              null              null              null              null              null              null              "
+  }
+  message("Calibration file is included in the setups and file.cio")
+} else {
+  warning("Calibration file is missing. Please provide correct 'calibration.cal' 
+          path or ignore the warning, if it is not needed.")
+}
+writeLines(file_cio, paste0(tmp_setup_path, "/", "file.cio"))
+overwrite_file("file.cio")
+
+##------------------------------------------------------------------------------
+## 8) Run all climate scenarios in parallel and collect results
+##------------------------------------------------------------------------------
+
+## Prepare parallelization
+cl <- makeCluster(cores,  outfile="")
+registerDoParallel(cl)
+
+## Write files, if missing
+txt_info <- foreach (d = m_dir) %dopar% {
+  file.copy(paste0(tmp_path, "/", "setup/", setdiff(list.files(path = tmp_setup_path), 
+                                                  list.files(path = d))), d)}
+## Run parallelization
+wd <- getwd()
+txt_info <- foreach (d = m_dir) %dopar% {
+  # run SWAT for all cal files in parallel
+  setwd(paste(wd, d, sep='/'))
+  system(swat_exe)
+  
+  #Collect output files
+  cal <- paste(wd, tmp_path, "sim", tail(unlist(strsplit(d,'/')), n = 1), sep = "/")
+  dir.create(cal, recursive = TRUE)
+  
+  files.out.aa <- dir(getwd(), pattern = 'aa')
+  files.out.mon <- dir(getwd(), pattern = 'mon')
+  files.out.day <- dir(getwd(), pattern = 'day')
+  files.help <- c('hru.con') 
+  ## (cropland hru names) in txt folder
+  file.copy(c(files.out.aa,files.out.mon,files.out.day,files.help), cal, overwrite = T)
+  file.remove(c(files.out.aa,files.out.mon,files.out.day))
+  file.remove(list.files(path = paste(wd, d, sep='/'), 
+                         pattern = ".*.txt$|.*.out$|.*.swf$|.*.mgts$|.*.farm$", full.names = TRUE))
+}
+stopCluster(cl)
+
+##------------------------------------------------------------------------------
+## 9) Load Micha's functions for the output extraction and prepare results
+##------------------------------------------------------------------------------
+
+## Check if preparation of any scenario runs failed.
+subdirs <- list.dirs(path = paste0(tmp_path, "/sim"), recursive = TRUE, full.names = TRUE)
+missing_cha_day<- subdirs[!file.exists(file.path(subdirs, "cha_day.out")) & subdirs != paste0(tmp_path, "/sim")]
+if(length(missing_cha_day)!=0){
+  print(paste0("These folder have failed: ", missing_cha_day))
+}
+
+source('lib/calc_Indis.R')
+
+## Direstory with the simulation results
+path <- paste(tmp_path, "sim", sep = "/")
+
+##------------------------------------------------------------------------------
+## 10)  Output analysis from Micha (warranty provided by Micha ;)
+##------------------------------------------------------------------------------
+
+### Collect average annual output of water quantity and quality at outlet channel 
+## (aggregated comparison)
+r_dir <- list.dirs(path, recursive = TRUE)[-1]
+
+rch <- sprintf("cha%03d", outflow_reach)
+
+# threshold for low flow
+# the number of days below this threshold will later be calculated
+# default value is the 5th percentile of rcp26 for the baseline period (average across all rcms)
+# feel free to use another threshold value!!
+tmp_df <- ind_cha_dayII(r_dir, rch, 'Q_p95p05', ensemble=F)
+threshold_lowQ <- mean(tmp_df[seq(2,17,3),8])  #adjust channel
+
+# threshold for high flow
+# the number of days beyond this threshold will later be calculated
+# default value is the 95th percentile of rcp26 for the baseline period (average across all rcms)
+# feel free to use another threshold value!!
+
+threshold_highQ <- mean(tmp_df[seq(2,17,3),4])  #adjust channel
+
+###  collect indicators related to the average annual water balance
+cha_aa_all <- ind_cha_aa(r_dir, rch) #adjust channel
+
+###  collect indicators related to the daily dynamics Water, N, P, Sed
+cha_day_all <- ind_cha_dayII(r_dir, rch, 'all',
+                             threshold_lowQ = threshold_lowQ,
+                             threshold_highQ = threshold_highQ,
+                             threshold_N = threshold_N,
+                             threshold_P = threshold_P,
+                             threshold_Sed = threshold_Sed) #adjust channel
+
+###  collect HRU-based indicators related to water quality (average annual losses)
+hru_aa_nb_all <- ind_hru_aa_nb(r_dir) #adjust channel
+
+###  collect HRU-based indicators related to  water quantity (average annual values)
+hru_aa_wb_all <- ind_hru_aa_wb(r_dir)
+
+###  collect HRU-based indicators related to  water quantity (average annual for 
+## specified months)
+## please specify start and end months of interest for the soil water analysis
+sw_periods <- list(c(5:9), 5, 6, 7, 8, 9) #this is an example for printing sw for 
+## the period May to September and also for each single month in that period
+hru_mon_all <- ind_hru_mon_wb(r_dir, period = sw_periods, nrows = 54) #might take a while
+
+### collect cropping information for all scenarios - grain units and cultivated 
+## hectare average annual
+## define 1) path, 2) crop selection, 3) type of output: a) yield, b) ha, 4) 
+## specify grain units equivalent for 
+#  all of the selected crops (if you just keep the parameter 'grain_units', 
+## there is already a parameterisation for 
+#   'wwht', 'akgs', 'wbar', 'wira', 'csil', 'wiry', 'sgbt','barl'
+# the measure list (measr.list) can be adapted to the measures you want to compare
+
+#adjust
+crop_aa_gu <- ind_bsn_aa_crp(r_dir, crop_sel, out_type = "yield", grain_units)
+crop_aa_ha <- ind_bsn_aa_crp(r_dir, crop_sel, out_type = "ha", grain_units)
+
+### collect cropping information for all scenarios - Crop specific average annual 
+## yield and ha
+crop_aa_all <- ind_bsn_aa_crp_ha_Y(r_dir, crop_sel)
+
+##------------------------------------------------------------------------------
+## 11)  Aggregate outputs into one dataframe for plotting
+##------------------------------------------------------------------------------
+
+### combine data of interest in one dataframe for plotting
+df_plot <- cha_aa_all 
+for(l in list(cha_day_all, hru_aa_nb_all, hru_aa_wb_all, hru_mon_all, crop_aa_gu, 
+              crop_aa_ha, crop_aa_all)) df_plot <- left_join(df_plot, l, by = "scen_name")
+
+df_plot_long <- pivot_longer(df_plot, cols = -scen_name, names_to = "indi", values_to = "value")
+
+## Get long format for plotting
+df_plot_long  <- df_plot_long[!grepl("_H$", df_plot_long$scen_name),] %>% 
+  mutate(scen_base = gsub("_[[:alpha:]]*$","",scen_name)) %>% 
+  left_join(df_plot_long[grepl("_H$", df_plot_long$scen_name),] %>% 
+              mutate(scen_base = gsub("_[[:alpha:]]*$","",scen_name)) %>% 
+              dplyr::rename(value_base = value) %>% 
+              select(-scen_name), by = c("scen_base", "indi")) %>% 
+  mutate(value = round(100*(value/value_base-1), 3)) %>% 
+  select(-ends_with("base")) %>%
+  mutate(scen_name = toupper(scen_name)) %>% 
+  mutate_all(~ifelse(is.nan(.), NA, .)) %>% 
+  mutate(scen_name = gsub("_[^_]*_", "_", scen_name)) %>% 
+  separate(scen_name, into = c("RCP", "Period"), sep = "_") %>% 
+  mutate(Period = case_when(Period == "N" ~ "Near future",
+                         Period == "E" ~ "End century")) %>%
+  mutate(Period = factor(Period, levels = c("Near future", "End century")))
+
+##------------------------------------------------------------------------------
+## 12)  DATA FOR THE SYNTHESIS REPORT (send to Svajunas & Mikolaj)
+##------------------------------------------------------------------------------
+
+saveRDS(df_plot_long, file = paste0(tmp_path, "/climate_report.rds"))
+
+##Load saved data for plotting
+df_plot_long <- readRDS(paste0(tmp_path, "/climate_report.rds"))
+
+##------------------------------------------------------------------------------
+## 13)  Plotting your results
+##------------------------------------------------------------------------------
+
+## Print all available indicators
+unique(df_plot_long$indi)
+
+## Plotting selected indicators: divided into 4 thematic plots. See calc_indic.R for indicator explanations
+# First plot - water balance indicators (some of them can be removed if not relevant, others may be added)
+throw_box(df_plot_long, c("precip", "snofall", "snomlt", "pet", "et", "perc", 
+                          "sw", "sw_5", "sw_6", "sw_7", "sw_8", "sw_9", "sw_300", 
+                          "surq_cha", "latq_cha", "qtile"))
+
+#Second plot - flow indicators (some can be removed if not relevant, others can be added)
+throw_box(df_plot_long, c("Q_mean", "Q_p95", "Q_p90", "Q_p50", "Q_p10", 
+                          "Q_p90p10", "Q_low_days", "Q_high_days"))
+
+# #throw_box funtion could be addapted to remove outliers or increase font size
+# throw_box(df_plot_long, c("Q_mean", "Q_p95", "Q_p90", "Q_p50", "Q_p10", 
+#                           "Q_p90p10", "Q_low_days", "Q_high_days"), drop_outliers = TRUE, font_size = 14)
+
+#Third plot - water quality indicators (some can be removed if not relevant, others can be added)
+throw_box(df_plot_long, c("Nload", "Nconc_days", "N_loss","Pload", "Pconc_days", "P_loss"))
+
+#Fourth plot - crop yields - major crops from each CS should be selected
+throw_box(df_plot_long, c("canp_yld_t_ha", "barl_yld_t_ha", "corn_yld_t_ha", 
+                          "sgbt_yld_t_ha", "onio_yld_t_ha", "fesc_yld_t_ha", 
+                          "alfa_yld_t_ha", "trit_yld_t_ha", "wwht_yld_t_ha"))
+
+##------------------------------------------------------------------------------
+## 14)  Collect HRU results and map
+##------------------------------------------------------------------------------
+
+## Path to the results
+output_path <- list.dirs("tmp/sim", recursive = TRUE)[-1]
+## Path to vector data 
+vect_path <- 'data/vector'
+
+## Set the names for the scenarios
+c <- expand.grid(c("rcp26", "rcp45", "rcp85"), c("_H", "_N", "_E"))
+
+## Read the results
+results <- map2(c[1][[1]], c[2][[1]], ~read_model_output(output_path[grepl(.x, output_path)&grepl(.y, output_path)], 
+                                                         hru_shp_path = paste0(vect_path,'/hru.shp'),
+                                                         cha_shp_path = paste0(vect_path,'/cha.shp'),
+                                                         res_shp_path = paste0(vect_path,'/res.shp'))) %>% 
+  set_names(paste0(c[1][[1]], c[2][[1]]))
+
+## Recombine the results by the file type
+results_acclist <- list()
+for(n in names(results)){
+  for(nn in names(results[[n]])){
+    results_acclist[[nn]] <- bind_rows(results_acclist[[nn]], results[[n]][[nn]] %>% 
+                                         mutate(scen = n) %>% 
+                                         separate(scen, c("RCP", "PERIOD"), sep = "_") %>% 
+                                         mutate(PERIOD = case_when(PERIOD == "H" ~ "Historical",
+                                                                   PERIOD == "N" ~ "Near future",
+                                                                   PERIOD == "E" ~ "End of century"),
+                                                RCP = toupper(RCP)))
+  }
+}
+
+## Calculate percentage differences
+## For each file in the list 
+for(n in names(results_acclist)[!endsWith(names(results_acclist), "_pr")]){
+  l <- results_acclist[[n]]
+  df <- NULL
+  p <- as.vector(unique(l$PERIOD))
+  rcp <- as.vector(unique(l$RCP))
+  ## For each RCP scenario
+  for(rcp1 in rcp){
+    ## Fix geometry names, geometries and RCP scenario names
+    col_12 <- l[c("name", "RCP", "PERIOD")] %>% 
+      .[.$RCP == rcp1 & .$PERIOD == p[1],] %>%
+      .[c(1, 2)]
+    ## All the other columns to be used in calculation
+    col_r <- l %>% st_drop_geometry %>% 
+      .[.$RCP == rcp1 & .$PERIOD == p[1],] %>%
+      .[c(16:ncol(.)-2)]
+    ## For two climate periods
+    for(p1 in p[c(2:3)]){
+      ##Calculating percentages 
+      df1 <- l %>% st_drop_geometry %>% 
+        .[.$RCP == rcp1 & .$PERIOD == p1,] %>%
+        .[c(16:ncol(.)-2)] %>% 
+        {100*(1 - (. - col_r)/col_r)} %>% 
+        bind_cols(col_12, .) %>% 
+        mutate(PERIOD = p1)
+      ## Combining into one data frame
+      if(is.null(df)) df <- df1 else df <- bind_rows(df, df1)
+    }
+  }
+  ## Saving into the same list
+  results_acclist[[paste0(n, "_pr")]] <- select(df, name, RCP, PERIOD, everything()) 
+}
+
+## Add the factors to the results
+for(n in names(results_acclist)){
+  results_acclist[[n]][["RCP"]] <- factor(results_acclist[[n]][["RCP"]], levels = c("RCP26", "RCP45", "RCP85"), ordered = TRUE)
+  results_acclist[[n]][["PERIOD"]] <- factor(results_acclist[[n]][["PERIOD"]], levels = c("Historical", "Near future", "End of century"), ordered = TRUE)
+}
+
+## Print the names of the variables for the map (example of only one table)
+## There are "hru_wb_sq" "hru_ls_sq" "hru_pw_sq" "cha_sq" tables available
+names(results_acclist$hru_pw_sq)
+
+## Plot the map (example of only one table and only one variable hru_pw_sq and strstmp)
+## percentage difference tables end with _pr, they are comparison with same RCP historical period
+
+ggplot() +
+  geom_sf(data = results_acclist$hru_pw_sq, mapping = aes(fill = strstmp), colour = NA) +
+  scale_fill_distiller(palette = "Spectral")+
+  facet_grid(RCP ~ PERIOD)+
+  theme_minimal()+
+  theme(axis.text = element_blank())
+

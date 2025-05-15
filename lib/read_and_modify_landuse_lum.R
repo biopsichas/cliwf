@@ -14,18 +14,18 @@ read_tbl <- function(tbl_name, proj_path, row_data_start, row_col_names) {
     str_trim(.) %>%
     str_split(., '[:space:]+') %>%
     unlist()
-
+  
   tbl <- vroom_lines(tbl_path, skip = row_data_start - 1) %>%
     str_trim(.) %>%
     str_split(., '\t[:space:]+|[:space:]+')
-
+  
   is_num <- tbl[[1]] %>% as.numeric() %>% suppressWarnings() %>% map_lgl(., ~!is.na(.x)) %>%  which()
-
+  
   tbl <- tbl %>%
     map(., ~ set_names(.x, col_names)) %>%
     map_df(., bind_rows) %>%
     mutate(across(all_of(is_num), ~ as.numeric(.x)))
-
+  
   return(tbl)
 }
 
@@ -41,23 +41,31 @@ lum$cn2[which(substr(lum$name,1,1)=='f')] <- 'rc_strow_g'
 lum$cn2[which(substr(lum$name,1,2)=='fr')] <- 'wood_f'
 lum$cn2[which(substr(lum$name,1,2)=='fe')] <- 'pasth'
 lum$cn2[which(substr(lum$name,1,4)=='alfa')] <- 'pasth'
-lum$cn2[which(substr(lum$name,1,4)=='agrl')] <- 'brush_f'
-lum$cn2[which(substr(lum$name,1,4)=='urhd')] <- 'urban'
+lum$cn2[which(substr(lum$name,1,4)=='agrl')] <- 'rc_strow_g'
+lum$cn2[which(substr(lum$name,1,4)=='urmd')] <- 'urban'
 lum$cn2[which(substr(lum$name,1,4)=='urld')] <- 'farm'
 lum$cn2[which(substr(lum$name,1,4)=='wetl')] <- 'pasth'
 lum$cn2[which(substr(lum$name,1,4)=='orcd')] <- 'woodgr_f'
+lum$cn2[which(substr(lum$name,1,4)=='grap')] <- 'woodgr_f'      
+lum$cn2[which(substr(lum$name,1,4)=='past')] <- 'pasth'       
+lum$cn2[which(substr(lum$name,1,4)=='rngb')] <- 'pasth'       
+lum$cn2[which(substr(lum$name,1,4)=='buff')] <- 'pasth'      
 lum %>% filter(cn2 == "null") %>% select(name) %>% unique()
 
 ## cons_prac
 lum$cons_prac[which(substr(lum$name,1,1)=='f')] <- 'up_down_slope'
-lum$cons_prac[which(substr(lum$name,1,2)=='fr')] <- 'up_down_slope'
-lum$cons_prac[which(substr(lum$name,1,2)=='fe')] <- 'up_down_slope'
-lum$cons_prac[which(substr(lum$name,1,4)=='alfa')] <- 'up_down_slope'
+lum$cons_prac[which(substr(lum$name,1,2)=='fr')] <- 'greening'     
+lum$cons_prac[which(substr(lum$name,1,2)=='fe')] <- 'greening'
+lum$cons_prac[which(substr(lum$name,1,4)=='alfa')] <- 'greening'
 lum$cons_prac[which(substr(lum$name,1,4)=='agrl')] <- 'up_down_slope'
-lum$cons_prac[which(substr(lum$name,1,4)=='urhd')] <- 'up_down_slope'
+lum$cons_prac[which(substr(lum$name,1,4)=='urmd')] <- 'up_down_slope'
 lum$cons_prac[which(substr(lum$name,1,4)=='urld')] <- 'up_down_slope'
-lum$cons_prac[which(substr(lum$name,1,4)=='wetl')] <- 'up_down_slope'
-lum$cons_prac[which(substr(lum$name,1,4)=='orcd')] <- 'up_down_slope'
+lum$cons_prac[which(substr(lum$name,1,4)=='wetl')] <- 'greening'
+lum$cons_prac[which(substr(lum$name,1,4)=='orcd')] <- 'greening'
+lum$cons_prac[which(substr(lum$name,1,4)=='grap')] <- 'greening'
+lum$cons_prac[which(substr(lum$name,1,4)=='past')] <- 'greening'
+lum$cons_prac[which(substr(lum$name,1,4)=='rngb')] <- 'greening'
+lum$cons_prac[which(substr(lum$name,1,4)=='buff')] <- 'greening'
 lum %>% filter(cons_prac == "null") %>% select(name) %>% unique()
 
 ## ov_mann
@@ -65,16 +73,21 @@ lum$ov_mann[which(substr(lum$name,1,1)=='f')] <- 'convtill_nores'
 lum$ov_mann[which(substr(lum$name,1,2)=='fr')] <- 'forest_med'
 lum$ov_mann[which(substr(lum$name,1,2)=='fe')] <- 'densegrass'
 lum$ov_mann[which(substr(lum$name,1,4)=='alfa')] <- 'densegrass'
-lum$ov_mann[which(substr(lum$name,1,4)=='agrl')] <- 'densegrass'
-lum$ov_mann[which(substr(lum$name,1,4)=='urhd')] <- 'urban_asphalt'
+lum$ov_mann[which(substr(lum$name,1,4)=='agrl')] <- 'up_down_slope'
+lum$ov_mann[which(substr(lum$name,1,4)=='urmd')] <- 'urban_asphalt'
 lum$ov_mann[which(substr(lum$name,1,4)=='urld')] <- 'shortgrass'
 lum$ov_mann[which(substr(lum$name,1,4)=='wetl')] <- 'densegrass'
 lum$ov_mann[which(substr(lum$name,1,4)=='orcd')] <- 'forest_light'
+lum$ov_mann[which(substr(lum$name,1,4)=='grap')] <- 'forest_light'	    # ???
+lum$ov_mann[which(substr(lum$name,1,4)=='past')] <- 'densegrass'	    # ???
+lum$ov_mann[which(substr(lum$name,1,4)=='rngb')] <- 'densegrass'	    # ???
+lum$ov_mann[which(substr(lum$name,1,4)=='buff')] <- 'densegrass'	    # ???
 lum %>% filter(ov_mann == "null") %>% select(name) %>% unique()
 
 ## urban
 lum$urban[which(substr(lum$name,1,4)=='urld')] <- 'urld'
 lum$urban[which(substr(lum$name,1,4)=='urhd')] <- 'utrn'
+lum$urban[which(substr(lum$name,1,4)=='urmd')] <- 'urmd'
 
 # Write new landuse.lum ---------------------------------------------
 fmt_nam <- c('%-28s', '%-9s', rep('%17s', 12))
@@ -90,5 +103,3 @@ lum_lines <- lum %>%
 
 lum_lines <- c(lum_head, lum_names, lum_lines)
 write_lines(lum_lines, paste(proj_path, 'landuse.lum', sep = '/'))
-
-

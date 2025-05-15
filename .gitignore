@@ -1,6 +1,7 @@
 test*
 tmp*
+farmR_input.csv
 .Rproj.user
 .Rhistory
 .RData
-.Ruserdata
+.Ruserdatadata/farmR_input.csv
