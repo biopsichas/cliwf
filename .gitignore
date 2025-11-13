@@ -9,3 +9,4 @@ data/farmR_input.csv
 data/climate_data/rcp*
 skipped_operations.csv
 preprocessing.R
+nul
