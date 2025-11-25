@@ -1,4 +1,4 @@
-chem_app.ops: written by SWAT+ editor v2.1.0 on 2025-10-21 00:01 for SWAT+ rev.2.1.4
+chem_app.ops: written by SWAT+ editor v2.1.0 on 2025-10-22 12:10 for SWAT+ rev.2.1.4
 name                     chem_form           app_typ       app_eff    foliar_eff     inject_dp     surf_frac     drift_pot   aerial_unif  description
 broadcast                    solid            spread       0.90000       0.00000       0.00000       1.00000       0.00000       1.00000  
 band                         solid            spread       0.90000       0.00000       0.00000       1.00000       0.00000       0.50000  

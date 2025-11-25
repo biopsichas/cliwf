@@ -1,4 +1,4 @@
-irr.ops: written by SWAT+ editor v2.1.0 on 2025-10-21 00:01 for SWAT+ rev.2.1.4
+irr.ops: written by SWAT+ editor v2.1.0 on 2025-10-22 12:10 for SWAT+ rev.2.1.4
 name                    amt_mm      eff_frac     sumq_frac       dep_sub      salt_ppm       no3_ppm       po4_ppm  description
 sprinkler_med         25.00000       0.85000       0.00000       0.00000     100.00000      20.00000       1.00000  
 sprinkler_high        40.00000       0.80000       0.00000       0.00000     100.00000      20.00000       1.00000  

@@ -16,7 +16,7 @@ setup_dir <- 'data/clean_setup'
 ## input script)
 mgt <- 'data/farmR_input.csv'
 ## Directory to save results
-tmp_path <- "tmp"
+tmp_path <- "tmp3"
 ## Define path to calibration.cal file
 cal_file <- "data/calibration.cal" ## if NULL, no calibration.cal will be included
 

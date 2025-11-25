@@ -1,4 +1,4 @@
-urban.urb: written by SWAT+ editor v2.1.0 on 2025-10-21 00:01 for SWAT+ rev.2.1.4
+urban.urb: written by SWAT+ editor v2.1.0 on 2025-10-22 12:10 for SWAT+ rev.2.1.4
 name                  frac_imp   frac_dc_imp      curb_den      urb_wash      dirt_max     t_halfmax     conc_totn     conc_totp     conc_no3n        urb_cn  description
 residen_high_den       0.60000       0.44000       0.24000       0.18000     225.00000       0.75000     550.00000     223.00000       7.20000      98.00000  Residential-High
 residen_med_den        0.38000       0.30000       0.24000       0.18000     225.00000       0.75000     550.00000     223.00000       7.20000      98.00000  Residential-Medium

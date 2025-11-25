@@ -1,4 +1,4 @@
-hydrology.hyd: written by SWAT+ editor v2.1.0 on 2025-10-21 00:01 for SWAT+ rev.2.1.4
+hydrology.hyd: written by SWAT+ editor v2.1.0 on 2025-10-22 12:10 for SWAT+ rev.2.1.4
 name                 lat_ttime       lat_sed       can_max          esco          epco   orgn_enrich   orgp_enrich       cn3_swf       bio_mix         perco      lat_orgn      lat_orgp      harg_pet       latq_co  
 hyd0001                0.00000       0.00000       1.00000       0.95000       1.00000       0.00000       0.00000       0.00000       0.20000       0.05000       0.00000       0.00000       0.00000       0.90000  
 hyd0002                0.00000       0.00000       1.00000       0.95000       1.00000       0.00000       0.00000       0.00000       0.20000       0.05000       0.00000       0.00000       0.00000       0.90000  

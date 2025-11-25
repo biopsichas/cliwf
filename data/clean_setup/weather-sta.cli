@@ -1,4 +1,4 @@
-weather-sta.cli: written by SWATprepR R package on 2025-10-21 00:02:36.917665 for SWAT+ rev.60.5.4
+weather-sta.cli: written by SWATprepR R package on 2025-10-22 12:11:14.606362 for SWAT+ rev.60.5.4
 name                            wgn                         pcp                         tmp                         slr                         hmd                         wnd                     wnd_dir                    atmo_dep
 s4656n1647e                     Len                 sta_id1.pcp                 sta_id1.tmp                 sta_id1.slr                 sta_id1.hmd                 sta_id1.wnd                        null                 atmodep.cli
 s4665n1619e                     Rak                 sta_id3.pcp                 sta_id3.tmp                 sta_id3.slr                 sta_id3.hmd                 sta_id3.wnd                        null                 atmodep.cli

@@ -102,31 +102,32 @@ source('lib/read_and_modify_landuse_lum.R')
 # ##Clean clusters after
 # stopCluster(cl)
 ## Set paths
-data_path <- paste0(cli_dir, "/06-gridded/CORDEX-BC")
-catchment_boundary_path <- "data/vector/basin.shp"
 
-## Load netcdf climate weather data
-result <- load_netcdf_weather(data_path, catchment_boundary_path)
-##These files will be copied from model directory and updated with prepare_climate function
-files_to_copy <- paste(setup_dir, c("aquifer.con", "chandeg.con", "hru.con", "reservoir.con", "rout_unit.con", "time.sim"), sep="/")
-for (rcp in c("rcp26", "rcp45", "rcp85")){
-  ##Each rcm
-  for (rcm in as.character(c(1:6))){
-    ##Loading climate data from SWAT+ input files
-    climate_lst <- result[[rcp]][[rcm]]
-    ##Each period
-    for(p in periods){
-      ##Creating new directory
-      cli_dir_tmp <- paste("data/climate_data", rcp, rcm, p[1], sep = "/")
-      dir.create(cli_dir_tmp, recursive = TRUE)
-      ##Coping files to update
-      file.copy(files_to_copy, paste(cli_dir_tmp, c("aquifer.con", "chandeg.con", "hru.con", "reservoir.con", "rout_unit.con", "time.sim"), sep = "/"), overwrite = TRUE)
-      ##Running function to prepare climate input for scenario
-      prepare_climate(climate_lst, cli_dir_tmp, p[2], p[3])
-      print(paste(rcp, "rcm", rcm, p[1], p[2], "-", p[3], "set prepared."))
-    }
-  }
-}
+# data_path <- paste0(cli_dir, "/06-gridded/CORDEX-BC")
+# catchment_boundary_path <- "data/vector/basin.shp"
+# 
+# ## Load netcdf climate weather data
+# result <- load_netcdf_weather(data_path, catchment_boundary_path)
+# ##These files will be copied from model directory and updated with prepare_climate function
+# files_to_copy <- paste(setup_dir, c("aquifer.con", "chandeg.con", "hru.con", "reservoir.con", "rout_unit.con", "time.sim"), sep="/")
+# for (rcp in c("rcp26", "rcp45", "rcp85")){
+#   ##Each rcm
+#   for (rcm in as.character(c(1:6))){
+#     ##Loading climate data from SWAT+ input files
+#     climate_lst <- result[[rcp]][[rcm]]
+#     ##Each period
+#     for(p in periods){
+#       ##Creating new directory
+#       cli_dir_tmp <- paste("data/climate_data", rcp, rcm, p[1], sep = "/")
+#       dir.create(cli_dir_tmp, recursive = TRUE)
+#       ##Coping files to update
+#       file.copy(files_to_copy, paste(cli_dir_tmp, c("aquifer.con", "chandeg.con", "hru.con", "reservoir.con", "rout_unit.con", "time.sim"), sep = "/"), overwrite = TRUE)
+#       ##Running function to prepare climate input for scenario
+#       prepare_climate(climate_lst, cli_dir_tmp, p[2], p[3])
+#       print(paste(rcp, "rcm", rcm, p[1], p[2], "-", p[3], "set prepared."))
+#     }
+#   }
+# }
 
 ## The files are already prepared in the 'data/climate' directory by preprocessing.R script.
 ## Please refer to it if there is a need to re-run climate data preparation.
@@ -168,10 +169,27 @@ cl <- makeCluster(cores,  outfile="")
 registerDoParallel(cl)
 
 ##Run parallelization
-txt_info <- foreach(d = m_dir[c(11:54)], .packages = c("SWATfarmR", "tidyverse",
+txt_info <- foreach(d = m_dir, .packages = c("SWATfarmR", "tidyverse",
                                  "stringr")) %dopar% {write_mgt(d, periods)}
 ##Clean after
 stopCluster(cl)
+
+
+# # Check which directories are missing management.sch
+missing_mgmt <- m_dir[!file.exists(file.path(m_dir, "management.sch"))]
+if(length(missing_mgmt) > 0){
+  stop(paste0("The following directories are missing 'management.sch' file and will be updated:", missing_mgmt))
+}
+
+# #
+# for(m in missing_mgmt){
+#   unlink(m, recursive = TRUE); dir.create(m, recursive = TRUE)
+#   parts <- strsplit(basename(m), "_")[[1]]
+#   files_to_copy <- list.files(paste(cli_dir, parts[1], gsub("\\D", "", parts[2]), parts[3], sep = "/"), full.names = TRUE)
+#   file.copy(files_to_copy, m, overwrite = TRUE)
+#   write_mgt(m, periods)
+# }
+
 # 
 ##Alternative way of running parallelized SWATfarmR
 # library(doFuture)
@@ -254,7 +272,9 @@ registerDoParallel(cl)
 ## Write files, if missing
 txt_info <- foreach (d = m_dir) %dopar% {
   file.copy(paste0(tmp_path, "/", "setup/", setdiff(list.files(path = tmp_setup_path), 
-                                                  list.files(path = d))), d)}
+                                                  list.files(path = d))), d)
+  file.copy(list.files(path = "lib/files_to_overwrite", full.names = TRUE), d, 
+            overwrite = TRUE)}
 ## Run parallelization
 wd <- getwd()
 txt_info <- foreach (d = m_dir) %dopar% {
@@ -291,9 +311,18 @@ path <- paste(tmp_path, "sim", sep = "/")
 ## 10)  Output analysis from Micha (warranty provided by Micha ;)
 ##------------------------------------------------------------------------------
 
+
 ### Collect average annual output of water quantity and quality at outlet channel 
 ## (aggregated comparison)
 r_dir <- list.dirs(path, recursive = TRUE)[-1]
+
+
+# # Check which directories are missing results
+missing_results <- m_dir[!file.exists(file.path(r_dir, "cha_day.out"))]
+if(length(missing_results) > 0){
+  stop(paste0("The following directories are missing 'cha_day.out' file:", missing_results))
+}
+
 rch <- paste0("cha", outflow_reach)
 
 # threshold for low flow

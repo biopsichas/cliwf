@@ -42,7 +42,7 @@ lum$cn2[which(substr(lum$name,1,2)=='fr')] <- 'wood_f'
 lum$cn2[which(substr(lum$name,1,2)=='fe')] <- 'pasth'
 lum$cn2[which(substr(lum$name,1,4)=='alfa')] <- 'pasth'
 lum$cn2[which(substr(lum$name,1,4)=='agrl')] <- 'rc_strow_g'
-lum$cn2[which(substr(lum$name,1,4)=='urmd')] <- 'urban'
+lum$cn2[which(substr(lum$name,1,4)=='urmd')] <- 'farm'
 lum$cn2[which(substr(lum$name,1,4)=='urld')] <- 'farm'
 lum$cn2[which(substr(lum$name,1,4)=='wetl')] <- 'pasth'
 lum$cn2[which(substr(lum$name,1,4)=='orcd')] <- 'woodgr_f'
@@ -74,7 +74,7 @@ lum$ov_mann[which(substr(lum$name,1,2)=='fr')] <- 'forest_med'
 lum$ov_mann[which(substr(lum$name,1,2)=='fe')] <- 'densegrass'
 lum$ov_mann[which(substr(lum$name,1,4)=='alfa')] <- 'densegrass'
 lum$ov_mann[which(substr(lum$name,1,4)=='agrl')] <- 'up_down_slope'
-lum$ov_mann[which(substr(lum$name,1,4)=='urmd')] <- 'urban_asphalt'
+lum$ov_mann[which(substr(lum$name,1,4)=='urmd')] <- 'shortgrass'
 lum$ov_mann[which(substr(lum$name,1,4)=='urld')] <- 'shortgrass'
 lum$ov_mann[which(substr(lum$name,1,4)=='wetl')] <- 'densegrass'
 lum$ov_mann[which(substr(lum$name,1,4)=='orcd')] <- 'forest_light'
@@ -103,3 +103,5 @@ lum_lines <- lum %>%
 
 lum_lines <- c(lum_head, lum_names, lum_lines)
 write_lines(lum_lines, paste(proj_path, 'landuse.lum', sep = '/'))
+
+

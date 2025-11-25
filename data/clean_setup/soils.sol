@@ -1,4 +1,4 @@
-soils.sol: written by SWAT+ editor v2.1.0 on 2025-10-21 00:01 for SWAT+ rev.2.1.4
+soils.sol: written by SWAT+ editor v2.1.0 on 2025-10-22 12:10 for SWAT+ rev.2.1.4
 name                            nly           hyd_grp        dp_tot    anion_excl      perc_crk  texture                              dp            bd           awc        soil_k        carbon          clay          silt          sand          rock           alb        usle_k            ec         caco3            ph  
 ZPP1208                           3                 C    1000.00000       0.50000       0.50000  null                       
                                                                                                                                200.00000       1.44553       0.14783       1.54625       2.72622      15.00000      47.00000      38.00000      10.00000       0.09000       0.01371       0.00000       0.00000       0.00000  

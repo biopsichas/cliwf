@@ -1,4 +1,4 @@
-channel-lte.cha: written by SWAT+ editor v2.1.0 on 2025-10-21 00:01 for SWAT+ rev.2.1.4
+channel-lte.cha: written by SWAT+ editor v2.1.0 on 2025-10-22 12:09 for SWAT+ rev.2.1.4
       id  name                       cha_ini           cha_hyd           cha_sed           cha_nut  
        1  cha01                     initcha1          hydcha01              null           nutcha1  
        2  cha02                     initcha1          hydcha02              null           nutcha1  
