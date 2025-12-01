@@ -67,8 +67,8 @@ grain_units <- data.frame('wbar' = 1.163,
 # please check if this is appropriate for your case study (e.g. type of river)
 # feel free to use other threshold values!!
 
-threshold_N=2.3
-threshold_P=0.082 
+threshold_N=3
+threshold_P=0.15
 
 # threshold for sediment concentration (mg N/l) 
 # the number of days beyond this threshold will later be calculated
@@ -76,5 +76,5 @@ threshold_P=0.082
 # if you know a reference please let me know (michael.strauch@ufz.de)
 # feel free to use another threshold value!!
 
-threshold_Sed=50
+threshold_Sed=25
 

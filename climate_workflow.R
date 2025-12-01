@@ -292,9 +292,9 @@ txt_info <- foreach (d = m_dir) %dopar% {
   files.help <- c('hru.con') 
   ## (cropland hru names) in txt folder
   file.copy(c(files.out.aa,files.out.mon,files.out.day,files.help), cal, overwrite = T)
-  file.remove(c(files.out.aa,files.out.mon,files.out.day,files.help))
+  file.remove(c(files.out.aa,files.out.mon,files.out.day))
   file.remove(list.files(path = paste(wd, d, sep='/'), 
-                         pattern = ".*.txt|.*.out|.*.swf|.*.mgts|.*.farm", full.names = TRUE))
+                         pattern = "\\.(txt|out|swf|mgts|farm)$", full.names = TRUE))
 }
 stopCluster(cl)
 
@@ -419,23 +419,22 @@ unique(df_plot_long$indi)
 # First plot - water balance indicators (some of them can be removed if not relevant, others may be added)
 throw_box(df_plot_long, c("precip", "snofall", "snomlt", "pet", "et", "perc", 
                           "sw", "sw_5", "sw_6", "sw_7", "sw_8", "sw_9", "sw_300", 
-                          "surq_cha", "latq_cha", "qtile"))
+                          "surq_cha", "latq_cha"))
 
 #Second plot - flow indicators (some can be removed if not relevant, others can be added)
-throw_box(df_plot_long, c("Q_mean", "Q_p95", "Q_p90", "Q_p50", "Q_p10", 
-                          "Q_p90p10", "Q_low_days", "Q_high_days"))
+throw_box(df_plot_long, c("Q_p50"))
+throw_box(df_plot_long, c("Q_mean", "Q_p95", "Q_p90", "Q_p50", "Q_p10","Q_p90p10", "Q_low_days", "Q_high_days"))
 
 # #throw_box funtion could be addapted to remove outliers or increase font size
 # throw_box(df_plot_long, c("Q_mean", "Q_p95", "Q_p90", "Q_p50", "Q_p10", 
 #                           "Q_p90p10", "Q_low_days", "Q_high_days"), drop_outliers = TRUE, font_size = 14)
 
 #Third plot - water quality indicators (some can be removed if not relevant, others can be added)
-throw_box(df_plot_long, c("Nload", "Nconc_days", "N_loss","Pload", "Pconc_days", "P_loss"))
+throw_box(df_plot_long, c("Sedload", "Sedconc_days", "Nload", "Nconc_days", "N_loss","Pload", "Pconc_days", "P_loss"))
 
 #Fourth plot - crop yields - major crops from each CS should be selected
-throw_box(df_plot_long, c("canp_yld_t_ha", "barl_yld_t_ha", "corn_yld_t_ha", 
-                          "sgbt_yld_t_ha", "onio_yld_t_ha", "fesc_yld_t_ha", 
-                          "alfa_yld_t_ha", "trit_yld_t_ha", "wwht_yld_t_ha"))
+throw_box(df_plot_long, c("corn_yld_t_ha", "wbar_yld_t_ha", "csil_yld_t_ha",
+                          "fesc_yld_t_ha", "wwht_yld_t_ha", "grap_yld_t_ha"))
 
 ##------------------------------------------------------------------------------
 ## 13)  DATA FOR THE SYNTHESIS REPORT (send to Svajunas & Mikolaj)
@@ -529,4 +528,3 @@ ggplot() +
   facet_grid(RCP ~ PERIOD)+
   theme_minimal()+
   theme(axis.text = element_blank())
-
